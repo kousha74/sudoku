@@ -50,6 +50,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BusinessLogic\AbstractSudoku.cs" />
+    <Compile Include="BusinessLogic\ClassicSudoku.cs" />
+    <Compile Include="BusinessLogic\Clique.cs" />
+    <Compile Include="BusinessLogic\Condition.cs" />
     <Compile Include="Communicator.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>

@@ -32,7 +32,7 @@ namespace Sudoku
 
             Application.DoEvents();
 
-            S.GenerateGame();
+            //S.GenerateGame();
 
             LoadSounds();
 
@@ -193,7 +193,7 @@ namespace Sudoku
         private void toolStripMenuItem1_Click(object sender, EventArgs e)
         {
             S.SolveStep(Sudoku.SolveMethods.All);
-
+          
             pictureBox1.Invalidate();
         }
 

@@ -12,6 +12,8 @@ namespace Sudoku
     {
         #region Class Decelerations
 
+        BusinessLogic.ClassicSudoku classicSudoku = BusinessLogic.ClassicSudoku.Instance;
+
         public int[,] s; // sudoku numbers
 
         private int[,] a; // aids
@@ -443,9 +445,31 @@ namespace Sudoku
             return result;
         }
 
+        public bool SetGameString2(string game)
+        {
+            char[] spearator = { '\n', ' ', '\r' };
+            string[] strs = game.Split(spearator, 81, StringSplitOptions.RemoveEmptyEntries);
+
+            if (strs.Length != 81)
+            {
+                return false;
+            }
+            List<int> initialNumbers = new List<int>();
+
+            for (int i = 0; i < 81;i++)
+            {
+                initialNumbers.Add(Convert.ToInt32(strs[i]));
+            }
+            classicSudoku.solvePuzzle(initialNumbers);
+
+            DisplayMessage = false;
+
+            return true;
+
+        }
         public bool SetGameString(string game)
         {
-            if (game.Length != 81) return false;
+            if (game.Length != 81) return SetGameString2(game);
 
             for (int n = 0; n < 81; n++)
             {
@@ -453,6 +477,8 @@ namespace Sudoku
 
                 if ((c < '1' || c > '9') && c != 'X') return false;
             }
+
+            List<int> initialNumbers = new List<int>();
 
             for (int n = 0; n < 81; n++)
             {
@@ -466,13 +492,17 @@ namespace Sudoku
                 {
                     s[i, j] = 0;
                     f[i, j] = 0;
+                    initialNumbers.Add(0);
                 }
                 else
                 {
                     s[i, j] = Convert.ToInt32(c);
                     f[i, j] = 1;
+                    initialNumbers.Add(Convert.ToInt32(c));
                 }
             }
+
+            classicSudoku.solvePuzzle(initialNumbers);
 
             EnumeratePossibilities();
 
@@ -592,11 +622,32 @@ namespace Sudoku
 
                             num = s[index_j, index_i].ToString();
 
-                            if (num == "0") num = "";
+                            num = "";
 
-                            if (f[index_j, index_i] == 1) FontColor = FontColor1;
+                            int number = classicSudoku.getInitialNumber(index_j, index_i);
 
-                            if (f[index_j, index_i] == 0) FontColor = FontColor2;
+                            if (number!=0)
+                            {
+                                num = number.ToString();
+                                FontColor = FontColor1;
+                            }
+                            else
+                            {
+                                number = classicSudoku.getNumber(index_j, index_i);
+                                if (number != 0)
+                                {
+                                    num = number.ToString();
+                                    FontColor = FontColor2;
+                                }
+                            }
+
+                            //num = classicSudoku.getInitialNumber(index_j, index_i).ToString();
+
+                            //if (num == "0") num = "";
+
+                            //if (f[index_j, index_i] == 1) FontColor = FontColor1;
+
+                            //if (f[index_j, index_i] == 0) FontColor = FontColor2;
 
                             SizeF size_num = G.MeasureString(num, F);
 
@@ -643,7 +694,8 @@ namespace Sudoku
                                 }
                             }
 
-                            //G.DrawString(hints, Fsmall, SmallFontColor, y);
+                            hints = classicSudoku.getCellHints(index_j, index_i);
+                            G.DrawString(hints, Fsmall, SmallFontColor, y);
 
                         }
                     }
@@ -857,6 +909,7 @@ namespace Sudoku
 
         public bool SolveStep(SolveMethods M)
         {
+            classicSudoku.solveStep();
             SolutionStepList L = ComputePossibleSteps(M);
 
             if (L.Count() == 0) return false;
