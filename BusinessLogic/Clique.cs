@@ -61,6 +61,11 @@ namespace Sudoku.BusinessLogic
         //checks of the other clique has all the UNDECIDED conditions
         public bool isSubsetOf(Clique other)
         {
+            if ((!other.active) || (!active))
+            {
+                return false;
+            }
+
             foreach (Condition condition in conditions)
             {
                 if ((condition.GetStatus() == Condition.Status.UNDECIDED) && (!other.hasCondition(condition)))
@@ -70,6 +75,28 @@ namespace Sudoku.BusinessLogic
             }
 
             return true;
+        }
+
+        public bool deactivateIfSuperSet(Clique other)
+        {
+            bool errorFound = false;
+
+            //if this clique is a superet of another clique, then it can be removed
+            if (other.isSubsetOf(this))
+            {
+                foreach (Condition condition in conditions)
+                {
+                    if (!other.hasCondition(condition))
+                    {
+                        if (!condition.setStatus(Condition.Status.NOT_SATISFIED))
+                        {
+                            errorFound = true;
+                        }
+                    }
+                }
+            }
+
+            return !errorFound;
         }
 
         public bool hasCondition(Condition newCondition)
@@ -93,6 +120,11 @@ namespace Sudoku.BusinessLogic
             }
         }
 
+        public void deactivate()
+        {
+            active = false;
+        }
+
         public bool needsUpdate()
         {
             return updateNeeded;
@@ -103,33 +135,77 @@ namespace Sudoku.BusinessLogic
             bool updated = false;
             if (active)
             {
-                int undecidedConditions = 0;
-                Condition undecidedCondition = null;
-                //check if there's only one undecided condition
-                foreach(Condition condition in conditions)
+                //check for subsets
+                foreach(Clique clique in cliques)
                 {
-                    if (condition.GetStatus() == Condition.Status.UNDECIDED)
-                    {
-                        undecidedConditions++;
-                        undecidedCondition = condition;
-                    }
-
-                    if (undecidedConditions > 1)
-                    {
-                        break;
-                    }
+                    clique.deactivateIfSuperSet(this); //tbd check return value
                 }
 
-                if (undecidedConditions ==1)
-                {
-                    active = false;
-                    undecidedCondition.setStatus(Condition.Status.SATISFIED);
-                    updated = true;
-                }
+                updated = checkHiddenSingles();
             }
             updateNeeded = false;
+       
+            return updated;
+        }
+
+        private bool checkHiddenSingles()
+        {
+            bool updated = false;
+            int undecidedConditions = 0;
+            Condition undecidedCondition = null;
+            //check if there's only one undecided condition
+            foreach (Condition condition in conditions)
+            {
+                if (condition.GetStatus() == Condition.Status.UNDECIDED)
+                {
+                    undecidedConditions++;
+                    undecidedCondition = condition;
+                }
+
+                if (undecidedConditions > 1)
+                {
+                    break;
+                }
+            }
+
+            if (undecidedConditions == 1)
+            {
+                active = false;
+                undecidedCondition.setStatus(Condition.Status.SATISFIED);
+                updated = true;
+            }
 
             return updated;
+        }
+
+        public override string ToString()
+        {
+            string str = "";
+            if (conditions[0].number == conditions[1].number)
+            {
+                str += "Clique " + id.ToString() + " => Number = " + conditions[0].number.ToString();
+                if (conditions.Last().row == conditions.First().row)
+                {
+                    str += ", ROW,";
+                }
+                else if (conditions.Last().col == conditions.First().col)
+                {
+                    str += ", COLUMN,";
+                }
+                else
+                {
+                    str += ", BOX,";
+                }
+
+                str += "(" + conditions.First().row.ToString() + conditions.First().col.ToString() + ")";
+                str += "(" + conditions.Last().row.ToString() + conditions.Last().col.ToString() + ")";            
+            }
+            else //this is a cell clique
+            {
+                str += "Clique " + id.ToString() + " => Cell(" + conditions[0].row.ToString() + conditions[0].col.ToString() + ")";
+            }
+            
+            return str;
         }
     }
 }

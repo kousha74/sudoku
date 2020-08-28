@@ -22,6 +22,12 @@ namespace Sudoku.BusinessLogic
             createConditions();
             cliques = createCliques();
 
+            //logging all the cliques
+            foreach (Clique clique in cliques)
+            {
+                Logger.Instance.WriteLine(Logger.LogLevel.ERROR, clique.ToString());
+            }
+
             //assing cliques to conditions
             foreach(Clique clique in cliques)
             {
@@ -179,14 +185,21 @@ namespace Sudoku.BusinessLogic
             {
                 int row = i / 9;
                 int col = i % 9;
-                initialNumbers[row, col] = numbers[i];
-                allNumbers[row, col] = numbers[i];
+                //initialNumbers[row, col] = numbers[i];
+                //allNumbers[row, col] = numbers[i];
 
                 if (numbers[i] != 0)
                 {
-                    conditions[row, col, numbers[i] - 1].setStatus(Condition.Status.SATISFIED);
+                    addInitialNumber(row, col, numbers[i]);
                 }
             }
+        }
+
+        public void addInitialNumber(int row, int col, int number)
+        {
+            initialNumbers[row, col] = number;
+            allNumbers[row, col] = number;
+            conditions[row, col, number - 1].setStatus(Condition.Status.SATISFIED);
         }
     }
 }

@@ -225,6 +225,7 @@ namespace Sudoku
 
             s[hity, hitx] = KeyCode - '0';
 
+            classicSudoku.addInitialNumber(hity, hitx, KeyCode - '0');
             e[hity, hitx] = 0;
 
             hitx = -1;

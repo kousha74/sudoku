@@ -77,11 +77,18 @@ namespace Sudoku.BusinessLogic
                 }
 
                 ClassicSudoku.Instance.setNumber(row, col, number + 1);
-            }
 
-            foreach(Clique clique in cliques)
+                foreach (Clique clique in cliques)
+                {
+                    clique.deactivate();
+                }
+            }
+            else
             {
-                clique.setUpdateNeeded();
+                foreach (Clique clique in cliques)
+                {
+                    clique.setUpdateNeeded();
+                }
             }
 
             return true;
