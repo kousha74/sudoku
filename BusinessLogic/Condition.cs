@@ -41,21 +41,23 @@ namespace Sudoku.BusinessLogic
             cliques.Add(clique);
         }
 
-        public bool setStatus(Status status)
+        //returns false if status cannot be set
+        public Outcome setStatus(Status status)
         {
             if (this.status != status)
             {
                 if (this.status != Status.UNDECIDED)
                 {
-                    return false;
+                    return Outcome.FAILED;
                 }
                 else
                 {
                     this.status = status;
-                    return handleNewStatus();
+                    return handleNewStatus() ? Outcome.UPDATED : Outcome.FAILED;
                 }
             }
-            return true;
+
+            return Outcome.NO_CHANGE;
         }
 
         public void reset()
@@ -70,7 +72,7 @@ namespace Sudoku.BusinessLogic
                 //mark all the neighbors as NOT_SATISFIED
                 foreach (Condition condition in neighbors)
                 {
-                    if (!condition.setStatus(Status.NOT_SATISFIED))
+                    if (condition.setStatus(Status.NOT_SATISFIED) == Outcome.FAILED)
                     {
                         return false;
                     }

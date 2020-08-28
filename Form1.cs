@@ -176,6 +176,17 @@ namespace Sudoku
 
         private void solveToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            BusinessLogic.Outcome outcome = BusinessLogic.ClassicSudoku.Instance.solveStep();
+            while (outcome == BusinessLogic.Outcome.UPDATED)
+            {
+                outcome = BusinessLogic.ClassicSudoku.Instance.solveStep();
+
+                if (outcome == BusinessLogic.Outcome.FAILED)
+                {
+                    MessageBox.Show("Solve Step Failed.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+
             if (S.checkSolvable(Sudoku.SolveMethods.All) == false)
             {
                 Application.DoEvents();

@@ -152,11 +152,5 @@ namespace Sudoku.BusinessLogic
 
             return boxConditions;
         }
-
-        public bool solvePuzzle(List<int> numbers)
-        {
-            setInitialNumbers(numbers);            
-            return false;
-        }
     }
 }

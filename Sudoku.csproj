@@ -55,6 +55,7 @@
     <Compile Include="BusinessLogic\ClassicSudoku.cs" />
     <Compile Include="BusinessLogic\Clique.cs" />
     <Compile Include="BusinessLogic\Condition.cs" />
+    <Compile Include="BusinessLogic\Outcome.cs" />
     <Compile Include="Communicator.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>

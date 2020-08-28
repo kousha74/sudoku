@@ -225,7 +225,10 @@ namespace Sudoku
 
             s[hity, hitx] = KeyCode - '0';
 
-            classicSudoku.addInitialNumber(hity, hitx, KeyCode - '0');
+            if (classicSudoku.addInitialNumber(hity, hitx, KeyCode - '0') == BusinessLogic.Outcome.FAILED)
+            {
+                MessageBox.Show("ERROR!!!!!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
             e[hity, hitx] = 0;
 
             hitx = -1;
@@ -461,7 +464,10 @@ namespace Sudoku
             {
                 initialNumbers.Add(Convert.ToInt32(strs[i]));
             }
-            classicSudoku.solvePuzzle(initialNumbers);
+            if (classicSudoku.setInitialNumbers(initialNumbers) == BusinessLogic.Outcome.FAILED)
+            {
+                MessageBox.Show("ERROR!!!!!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
 
             DisplayMessage = false;
 
@@ -503,7 +509,10 @@ namespace Sudoku
                 }
             }
 
-            classicSudoku.solvePuzzle(initialNumbers);
+            if (classicSudoku.setInitialNumbers(initialNumbers) == BusinessLogic.Outcome.FAILED)
+            {
+                MessageBox.Show("ERROR!!!!!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
 
             EnumeratePossibilities();
 
@@ -910,7 +919,11 @@ namespace Sudoku
 
         public bool SolveStep(SolveMethods M)
         {
-            classicSudoku.solveStep();
+            if (classicSudoku.solveStep() == BusinessLogic.Outcome.FAILED)
+            {
+                MessageBox.Show("Solve Step Failed.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
             SolutionStepList L = ComputePossibleSteps(M);
 
             if (L.Count() == 0) return false;

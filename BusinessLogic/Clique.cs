@@ -90,9 +90,9 @@ namespace Sudoku.BusinessLogic
             return true;
         }
 
-        public bool checkIfSuperSet(Clique other)
+        public Outcome checkIfSuperSet(Clique other)
         {
-            bool errorFound = false;
+            Outcome outcome = Outcome.NO_CHANGE;
 
             //if this clique is a superet of another clique, then it can be removed
             if (other.isSubsetOf(this))
@@ -101,15 +101,23 @@ namespace Sudoku.BusinessLogic
                 {
                     if (!other.hasCondition(condition))
                     {
-                        if (!condition.setStatus(Condition.Status.NOT_SATISFIED))
+                        switch (condition.setStatus(Condition.Status.NOT_SATISFIED))
                         {
-                            errorFound = true;
+                            case Outcome.FAILED:
+                                return Outcome.FAILED;
+
+                            case Outcome.UPDATED:
+                                outcome = Outcome.UPDATED;
+                                break;
+
+                            case Outcome.NO_CHANGE:
+                                break;
                         }
                     }
                 }
             }
 
-            return !errorFound;
+            return outcome;
         }
 
         public bool hasCondition(Condition newCondition)
@@ -129,6 +137,7 @@ namespace Sudoku.BusinessLogic
         {
             if (active)
             {
+                updateUndecidedConditions(); //tbd check
                 updateNeeded = true;
             }
         }
@@ -143,24 +152,57 @@ namespace Sudoku.BusinessLogic
             return updateNeeded;
         }
 
-        public bool updateClique()
+        public Outcome updateClique()
         {
-            bool updated = false;
+            Outcome outcome = Outcome.NO_CHANGE;
             if (active)
             {
-                updateUndecidedConditions();
+                if (undecidedConditions == 0)
+                {
+                    return Outcome.FAILED;
+                }
+
+                outcome = checkHiddenSingles();
+
+                if (outcome == Outcome.FAILED)
+                {
+                    return outcome;
+                }
+
                 //check for subsets
                 foreach (Clique clique in cliques)
                 {
-                    clique.checkIfSuperSet(this); //tbd check return value
+                    switch (clique.checkIfSuperSet(this))
+                    {
+                        case Outcome.FAILED:
+                            return Outcome.FAILED;
+
+                        case Outcome.UPDATED:
+                            outcome = Outcome.UPDATED;
+                            break;
+
+                        case Outcome.NO_CHANGE:
+                            break;
+                    }
                 }
 
-                updated = checkHiddenSingles();
-                checkForPairs();
+                switch (checkForPairs())
+                {
+                    case Outcome.FAILED:
+                        return Outcome.FAILED;
+
+                    case Outcome.UPDATED:
+                        outcome = Outcome.UPDATED;
+                        break;
+
+                    case Outcome.NO_CHANGE:
+                        break;
+                }
             }
+
             updateNeeded = false;
        
-            return updated;
+            return outcome;
         }
 
         private void updateUndecidedConditions()
@@ -178,21 +220,22 @@ namespace Sudoku.BusinessLogic
             }
         }
 
-        private bool checkHiddenSingles()
+        private Outcome checkHiddenSingles()
         {
             if (Bits.countSetBits(undecidedConditions) == 1)
             {
                 active = false;
                 int index = Bits.firstSetBits(undecidedConditions);
-                conditions[index].setStatus(Condition.Status.SATISFIED);
-                return true;
+                return conditions[index].setStatus(Condition.Status.SATISFIED);
             }
 
-            return false;
+            return Outcome.NO_CHANGE;
         }
 
-        private bool checkForPairs()
+        private Outcome checkForPairs()
         {
+            Outcome outcome = Outcome.NO_CHANGE;
+
             if (active)
             {
                 if (Bits.countSetBits(undecidedConditions) == 2)
@@ -214,20 +257,32 @@ namespace Sudoku.BusinessLogic
                             {
                                 foreach(Clique commonClique in undecided1[i].getCommonCliques(undecided2[i]))
                                 {
-                                    commonClique.removeAllBut(new List<Condition>() { undecided1[i], undecided2[i] });
+                                    switch(commonClique.removeAllBut(new List<Condition>() { undecided1[i], undecided2[i] }))
+                                    {
+                                        case Outcome.FAILED:
+                                            return Outcome.FAILED;
+
+                                        case Outcome.UPDATED:
+                                            outcome = Outcome.UPDATED;
+                                            break;
+
+                                        case Outcome.NO_CHANGE:
+                                            break;
+                                    }
                                 }
                             }
-
-                            return true;
                         }
                     }
                 }
             }
-            return false;
+
+            return outcome;
         }
 
-        public bool removeAllBut(List<Condition> excludedconditions)
+        public Outcome removeAllBut(List<Condition> excludedconditions)
         {
+            Outcome outcome = Outcome.NO_CHANGE;
+
             foreach(Condition condition in conditions)
             {
                 bool isExcluded = false;
@@ -242,11 +297,22 @@ namespace Sudoku.BusinessLogic
 
                 if (!isExcluded)
                 {
-                    condition.setStatus(Condition.Status.NOT_SATISFIED);
+                    switch (condition.setStatus(Condition.Status.NOT_SATISFIED))
+                    {
+                        case Outcome.FAILED:
+                            return Outcome.FAILED;
+
+                        case Outcome.UPDATED:
+                            outcome = Outcome.UPDATED;
+                            break;
+
+                        case Outcome.NO_CHANGE:
+                            break;
+                    }
                 }
             }
 
-            return true;//tbd check for error
+            return outcome;
         }
 
         //2 cliques are siblings if the start cell and end cell are the same

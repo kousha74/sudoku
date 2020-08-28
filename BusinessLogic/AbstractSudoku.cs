@@ -175,23 +175,33 @@ namespace Sudoku.BusinessLogic
         }
 
         //returns false if nothing happened
-        public bool solveStep()
+        public Outcome solveStep()
         {
+            Outcome outcome = Outcome.NO_CHANGE;
+
             foreach(Clique clique in cliques)
             {
                 if (clique.needsUpdate())
                 {
-                    if (clique.updateClique())
+                    switch (clique.updateClique())
                     {
-                        break;
+                        case Outcome.FAILED:
+                            return Outcome.FAILED;
+
+                        case Outcome.UPDATED:
+                            return Outcome.UPDATED;
+
+                        case Outcome.NO_CHANGE:
+                            break;
                     }
                 }
             }
 
-            return true;
+            return outcome;
         }
 
-        public void setInitialNumbers(List<int> numbers)
+        //returns false if fails
+        public Outcome setInitialNumbers(List<int> numbers)
         {
             reset();
 
@@ -205,16 +215,22 @@ namespace Sudoku.BusinessLogic
 
                 if (numbers[i] != 0)
                 {
-                    addInitialNumber(row, col, numbers[i]);
+                    if (addInitialNumber(row, col, numbers[i]) == Outcome.FAILED)
+                    {
+                        return Outcome.FAILED;
+                    }
                 }
             }
+
+            return Outcome.UPDATED;
         }
 
-        public void addInitialNumber(int row, int col, int number)
+        //returns false if fails
+        public Outcome addInitialNumber(int row, int col, int number)
         {
             initialNumbers[row, col] = number;
             allNumbers[row, col] = number;
-            conditions[row, col, number - 1].setStatus(Condition.Status.SATISFIED);
+            return conditions[row, col, number - 1].setStatus(Condition.Status.SATISFIED);
         }
 
         public string getNumbersString()
