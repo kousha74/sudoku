@@ -44,6 +44,23 @@ namespace Sudoku.BusinessLogic
             return -1;
         }
 
+        static public List<int> SetBits(ushort n)
+        {
+            int counter = 0;
+            List<int> setBits = new List<int>();
+            while (n > 0)
+            {
+                if((n & 1) != 0)
+                {
+                    setBits.Add(counter);
+                }
+                n >>= 1;
+                counter++;
+            }
+
+            return setBits;
+        }
+
         private Bits()
         {
 

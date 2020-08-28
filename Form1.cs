@@ -159,7 +159,7 @@ namespace Sudoku
 
         private void copyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Clipboard.SetText(S.GetGameString());
+            Clipboard.SetText(BusinessLogic.ClassicSudoku.Instance.getNumbersString());
         }
 
         private void pasteToolStripMenuItem_Click(object sender, EventArgs e)

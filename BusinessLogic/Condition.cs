@@ -103,5 +103,35 @@ namespace Sudoku.BusinessLogic
         {
             return id;
         }
+
+        public List<Clique> getCommonCliques(Condition condition)
+        {
+            return getCommonCliques(new List<Condition>() { condition });
+        }
+
+        public List<Clique> getCommonCliques(List<Condition> conditionList)
+        {
+            List<Clique> commonCliques = new List<Clique>();
+
+            foreach (Clique clique in cliques)
+            {
+                bool addClique = true;
+
+                foreach(Condition condition in conditionList)
+                {
+                    if (!clique.hasCondition(condition))
+                    {
+                        addClique = false;
+                    }
+                }
+
+                if (addClique)
+                {
+                    commonCliques.Add(clique);
+                }
+            }
+            return commonCliques;
+        }
+
     }
 }

@@ -156,6 +156,7 @@ namespace Sudoku.BusinessLogic
                 }
 
                 updated = checkHiddenSingles();
+                checkForPairs();
             }
             updateNeeded = false;
        
@@ -190,14 +191,83 @@ namespace Sudoku.BusinessLogic
             return false;
         }
 
+        private bool checkForPairs()
+        {
+            if (active)
+            {
+                if (Bits.countSetBits(undecidedConditions) == 2)
+                {
+                    foreach (Clique other in siblings)
+                    {
+                        if (other.getUndecidedConditionsBits() == undecidedConditions)
+                        {
+                            Logger.Instance.WriteLine(Logger.LogLevel.ERROR, "Pair Found");
+
+                            //first clique has 2 conditions that are not satisfiled, call 'em firs1, first2
+                            //second clique has 2 conditions that are not satisfiled, call 'em second1, second2
+                            List<Condition> undecided1 = getUndecidedConditions();
+                            List<Condition> undecided2 = other.getUndecidedConditions();
+
+                            int count = undecided1.Count;
+
+                            for(int i = 0; i<count; i++)
+                            {
+                                foreach(Clique commonClique in undecided1[i].getCommonCliques(undecided2[i]))
+                                {
+                                    commonClique.removeAllBut(new List<Condition>() { undecided1[i], undecided2[i] });
+                                }
+                            }
+
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        public bool removeAllBut(List<Condition> excludedconditions)
+        {
+            foreach(Condition condition in conditions)
+            {
+                bool isExcluded = false;
+                foreach(Condition excludedcondition in excludedconditions)
+                {
+                    if(condition.id == excludedcondition.id)
+                    {
+                        isExcluded = true;
+                        break;
+                    }
+                }
+
+                if (!isExcluded)
+                {
+                    condition.setStatus(Condition.Status.NOT_SATISFIED);
+                }
+            }
+
+            return true;//tbd check for error
+        }
+
         //2 cliques are siblings if the start cell and end cell are the same
         public bool isSibling(Clique other)
         {
-            return
-                (conditions.First().row == other.conditions.First().row) &&
-                (conditions.First().col == other.conditions.First().col) &&
-                (conditions.Last().row == other.conditions.Last().row) &&
-                (conditions.Last().col == other.conditions.Last().col);
+            /* if  (
+                 (conditions.First().row == other.conditions.First().row) &&
+                 (conditions.First().col == other.conditions.First().col) &&
+                 (conditions.Last().row == other.conditions.Last().row) &&
+                 (conditions.Last().col == other.conditions.Last().col)
+                 )
+             {
+                 return true;
+             }*/
+
+            if ((conditions.First().getCommonCliques(other.conditions.First()).Count != 0 ) &&
+                (conditions.Last().getCommonCliques(other.conditions.Last()).Count != 0))
+            {
+                return true;
+            }
+            return false;
         }
 
         public override string ToString()
@@ -230,9 +300,23 @@ namespace Sudoku.BusinessLogic
             return str;
         }
 
-        public ushort getUndecidedConditions()
+        public ushort getUndecidedConditionsBits()
         {
             return undecidedConditions;
+        }
+
+        public List<Condition> getUndecidedConditions()
+        {
+            List<Condition> conditionList = new List<Condition>();
+            foreach(Condition condition in conditions)
+            {
+                if (condition.GetStatus() == Condition.Status.UNDECIDED)
+                {
+                    conditionList.Add(condition);
+                }
+            }
+
+            return conditionList;
         }
     }
 }

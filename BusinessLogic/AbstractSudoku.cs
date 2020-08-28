@@ -216,5 +216,25 @@ namespace Sudoku.BusinessLogic
             allNumbers[row, col] = number;
             conditions[row, col, number - 1].setStatus(Condition.Status.SATISFIED);
         }
+
+        public string getNumbersString()
+        {
+            string numbersStr = "";
+            for (int row = 0; row < size; row++)
+            {
+                for (int col = 0; col < size; col++)
+                {
+                    if (allNumbers[row, col] == 0)
+                    {
+                        numbersStr += "X";
+                    }
+                    else
+                    {
+                        numbersStr += allNumbers[row, col].ToString();
+                    }
+                }
+            }
+            return numbersStr;
+        }
     }
 }
