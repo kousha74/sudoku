@@ -14,9 +14,17 @@ namespace Sudoku.BusinessLogic
         protected int[,] allNumbers;
 
         public readonly int size;
+        public readonly int[] bitCounter;
 
         public AbstractSudoku(int size)
         {
+            int allCombinations = 2 ^ size;
+            bitCounter = new int[allCombinations];
+            for (ushort i = 0; i <allCombinations; i++)
+            {
+                bitCounter[i] = Bits.countSetBits(i);
+            }
+
             this.size = size;
             conditions = new Condition[size, size, size];
             createConditions();
@@ -27,6 +35,7 @@ namespace Sudoku.BusinessLogic
             {
                 Logger.Instance.WriteLine(Logger.LogLevel.ERROR, clique.ToString());
             }
+
 
             //assing cliques to conditions
             foreach(Clique clique in cliques)
@@ -48,6 +57,12 @@ namespace Sudoku.BusinessLogic
                     {
                         cliques[first].addClique(cliques[second]);
                         cliques[second].addClique(cliques[first]);
+                    }
+
+                    if (cliques[first].isSibling(cliques[second]))
+                    {
+                        cliques[first].addSibling(cliques[second]);
+                        cliques[second].addSibling(cliques[first]);
                     }
                 }
             }

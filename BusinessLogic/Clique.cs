@@ -11,6 +11,7 @@ namespace Sudoku.BusinessLogic
 
         //cliques that have share than one condition with this one
         public readonly List<Clique> cliques = new List<Clique>();
+        private readonly List<Clique> siblings = new List<Clique>();
 
         private readonly int size;
         private static int globalId = 0;
@@ -19,6 +20,8 @@ namespace Sudoku.BusinessLogic
 
         //once one condition of a clique is satisfied, we are done with it
         public bool active = true;
+
+        private ushort undecidedConditions = 0;
 
         public Clique(int size)
         {
@@ -29,6 +32,11 @@ namespace Sudoku.BusinessLogic
 
         public void reset()
         {
+            undecidedConditions = 0;
+            for (int i = 0; i < size;i++)
+            {
+                undecidedConditions |= Bits.BITS[i];
+            }
             updateNeeded = false;
             active = true;
         }
@@ -41,6 +49,11 @@ namespace Sudoku.BusinessLogic
         public void addClique(Clique clique)
         {
             cliques.Add(clique);
+        }
+
+        public void addSibling(Clique clique)
+        {
+            siblings.Add(clique);
         }
 
         public int getCommonConditionCount(Clique other)
@@ -77,7 +90,7 @@ namespace Sudoku.BusinessLogic
             return true;
         }
 
-        public bool deactivateIfSuperSet(Clique other)
+        public bool checkIfSuperSet(Clique other)
         {
             bool errorFound = false;
 
@@ -135,10 +148,11 @@ namespace Sudoku.BusinessLogic
             bool updated = false;
             if (active)
             {
+                updateUndecidedConditions();
                 //check for subsets
-                foreach(Clique clique in cliques)
+                foreach (Clique clique in cliques)
                 {
-                    clique.deactivateIfSuperSet(this); //tbd check return value
+                    clique.checkIfSuperSet(this); //tbd check return value
                 }
 
                 updated = checkHiddenSingles();
@@ -148,34 +162,42 @@ namespace Sudoku.BusinessLogic
             return updated;
         }
 
+        private void updateUndecidedConditions()
+        {
+            if (active) {
+                undecidedConditions = 0;
+
+                for (int i = 0; i < size; i++)
+                {
+                    if (conditions[i].GetStatus() == Condition.Status.UNDECIDED)
+                    {
+                        undecidedConditions |= Bits.BITS[i];
+                    }
+                }
+            }
+        }
+
         private bool checkHiddenSingles()
         {
-            bool updated = false;
-            int undecidedConditions = 0;
-            Condition undecidedCondition = null;
-            //check if there's only one undecided condition
-            foreach (Condition condition in conditions)
-            {
-                if (condition.GetStatus() == Condition.Status.UNDECIDED)
-                {
-                    undecidedConditions++;
-                    undecidedCondition = condition;
-                }
-
-                if (undecidedConditions > 1)
-                {
-                    break;
-                }
-            }
-
-            if (undecidedConditions == 1)
+            if (Bits.countSetBits(undecidedConditions) == 1)
             {
                 active = false;
-                undecidedCondition.setStatus(Condition.Status.SATISFIED);
-                updated = true;
+                int index = Bits.firstSetBits(undecidedConditions);
+                conditions[index].setStatus(Condition.Status.SATISFIED);
+                return true;
             }
 
-            return updated;
+            return false;
+        }
+
+        //2 cliques are siblings if the start cell and end cell are the same
+        public bool isSibling(Clique other)
+        {
+            return
+                (conditions.First().row == other.conditions.First().row) &&
+                (conditions.First().col == other.conditions.First().col) &&
+                (conditions.Last().row == other.conditions.Last().row) &&
+                (conditions.Last().col == other.conditions.Last().col);
         }
 
         public override string ToString()
@@ -206,6 +228,11 @@ namespace Sudoku.BusinessLogic
             }
             
             return str;
+        }
+
+        public ushort getUndecidedConditions()
+        {
+            return undecidedConditions;
         }
     }
 }

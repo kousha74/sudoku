@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BusinessLogic\AbstractSudoku.cs" />
+    <Compile Include="BusinessLogic\Bits.cs" />
     <Compile Include="BusinessLogic\ClassicSudoku.cs" />
     <Compile Include="BusinessLogic\Clique.cs" />
     <Compile Include="BusinessLogic\Condition.cs" />
