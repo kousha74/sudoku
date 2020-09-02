@@ -7,11 +7,8 @@ namespace Sudoku.BusinessLogic
 {
     abstract class AbstractSudoku
     {
-        protected readonly Condition[,,] conditions;
-        protected readonly List<Condition> conditionList = new List<Condition>();
-        protected readonly List<Clique> cliques;
-        protected int[,] initialNumbers;
-        protected int[,] allNumbers;
+        private Dictionary<Condition, ConditionInfo> conditions = new Dictionary<Condition, ConditionInfo>();
+        private List<Clique> cliques = new List<Clique>();
 
         public readonly int size;
         public readonly int[] bitCounter;
@@ -26,152 +23,68 @@ namespace Sudoku.BusinessLogic
             }
 
             this.size = size;
-            conditions = new Condition[size, size, size];
-            createConditions();
-            cliques = createCliques();
+        }
+
+        public abstract void onConditionSatidfied(Condition condition);
+
+        public bool init(List<RawData> data)
+        {
+            if (cliques.Count != 0)
+            {
+                return false;
+            }
 
             //logging all the cliques
-            foreach (Clique clique in cliques)
+            foreach (RawData rawData in data)
             {
-                Logger.Instance.WriteLine(Logger.LogLevel.ERROR, clique.ToString());
-            }
+                Clique clique = new Clique(size, rawData.name, this);
+                cliques.Add(clique);
+                
+                List<ConditionInfo> conditionInfos = new List<ConditionInfo>();
 
-
-            //assing cliques to conditions
-            foreach(Clique clique in cliques)
-            {
-                foreach(Condition condition in clique.conditions)
+                foreach (Condition condition in rawData.conditions)
                 {
-                    condition.addClique(clique);
+                    ConditionInfo conditionInfo = null;
+                    if (conditions.ContainsKey(condition))
+                    {
+                        conditionInfo = conditions[condition];
+                    }
+                    else
+                    {
+                        conditionInfo = new ConditionInfo(condition, this);
+                        conditions.Add(condition, conditionInfo);
+                    }
+
+                    conditionInfo.addClique(clique);
+                    clique.addCondition(conditionInfo);
+
+                    foreach (ConditionInfo info in conditionInfos)
+                    {
+                        info.addNeighbor(conditionInfo);
+                        conditionInfo.addNeighbor(info);
+                    }
+
+                    conditionInfos.Add(conditionInfo);
                 }
             }
 
-            //cliques with overlap
-            int count = cliques.Count;
+            return true;
+        }
 
-            for (int first = 0; first < count; first++)
+        public virtual void Reset()
+        {
+            foreach (KeyValuePair<Condition, ConditionInfo> entry in conditions)
             {
-                for (int second = first + 1; second < count; second++)
-                {
-                    if (cliques[first].getCommonConditionCount(cliques[second]) > 1)
-                    {
-                        cliques[first].addClique(cliques[second]);
-                        cliques[second].addClique(cliques[first]);
-                    }
+                entry.Value.reset();
+            }
 
-                    if (cliques[first].isSibling(cliques[second]))
-                    {
-                        cliques[first].addSibling(cliques[second]);
-                        cliques[second].addSibling(cliques[first]);
-                    }
+            if (cliques != null)
+            {
+                foreach (Clique clique in cliques)
+                {
+                    clique.reset();
                 }
             }
-
-            initialNumbers = new int[size, size];
-            allNumbers = new int[size, size];
-
-            reset();
-        }
-
-        public abstract List<Clique> createCliques();
-
-        public abstract bool areNeighbors(Condition condition1, Condition condition2);
-
-        private void createConditions()
-        {
-            int row;
-            int col;
-            int number;
-
-            for (row = 0; row < size; row++)
-            {
-                for (col = 0; col <size; col++)
-                {
-                    for (number = 0; number < size; number++)
-                    {
-                        Condition condition = new Condition(row, col, number);
-                        conditions[row, col, number] = condition;
-                        conditionList.Add(condition);
-                    }
-                } 
-            }
-
-            //neighboring conditions
-            int count = conditionList.Count;
-            Condition condition1;
-            Condition condition2;
-
-            for (int first = 0; first < count; first++)
-            {
-                condition1 = conditionList[first];
-
-                for (int second = first+1; second < count; second++)
-                {
-                    condition2 = conditionList[second];
-
-                    if (areNeighbors(condition1, condition2))
-                    {
-                        condition1.addNeighbor(condition2);
-                        condition2.addNeighbor(condition1);
-                    }
-                }
-            }
-        }
-
-        public void reset()
-        {
-            foreach (Condition condition in conditionList)
-            {
-                condition.reset();
-            }
-
-            foreach(Clique clique in cliques)
-            {
-                clique.reset();
-            }
-
-            for (int row = 0; row < size; row++)
-            {
-                for (int col = 0; col < size; col++)
-                {
-                    initialNumbers[row, col] = 0;
-                    allNumbers[row, col] = 0;
-                }
-            }
-        }
-
-        public int getInitialNumber(int row, int col)
-        {
-            return initialNumbers[row,col];
-        }
-
-        public int getNumber(int row, int col)
-        {
-            return allNumbers[row,col];
-        }
-
-        public void setNumber(int row, int col, int number)
-        {
-            allNumbers[row,col] = number;
-        }
-
-        public string getCellHints(int row, int col)
-        {
-            string hints = "";
-
-            //no hints of the number is available
-            if (getInitialNumber(row,col) == 0)
-            {
-                for (int i = 0; i < size; i++)
-                {
-                    if (conditions[row,col,i].GetStatus() == Condition.Status.UNDECIDED)
-                    {
-                        hints += (i + 1).ToString();
-                    }
-                }
-            }
-
-            return hints;
         }
 
         //returns false if nothing happened
@@ -200,57 +113,101 @@ namespace Sudoku.BusinessLogic
             return outcome;
         }
 
-        //returns false if fails
-        public Outcome setInitialNumbers(List<int> numbers)
+        public Outcome setStatus(Condition condition, Status status)
         {
-            reset();
-
-            int i;
-            for ( i = 0; i < numbers.Count; i++)
+            if (conditions.ContainsKey(condition))
             {
-                int row = i / 9;
-                int col = i % 9;
-                //initialNumbers[row, col] = numbers[i];
-                //allNumbers[row, col] = numbers[i];
+                return conditions[condition].setStatus(status);
+            }
 
-                if (numbers[i] != 0)
+            return Outcome.FAILED;
+        }
+
+        public Status getStatus(Condition condition)
+        {
+            if (conditions.ContainsKey(condition))
+            {
+                return conditions[condition].getStatus();
+            }
+
+            return Status.UNDECIDED;
+        }
+
+        public List<Clique> getCommonCliques(ConditionInfo info1, ConditionInfo info2)
+        {
+            return getCommonCliques(new List<ConditionInfo>() { info1, info2 });
+        }
+
+        public List<Clique> getCommonCliques(List<ConditionInfo> conditionInfos)
+        {
+            List<Clique> cliques = new List<Clique>();
+
+            foreach(ConditionInfo info in conditionInfos)
+            {
+                if (cliques.Count == 0)
                 {
-                    if (addInitialNumber(row, col, numbers[i]) == Outcome.FAILED)
+                    //copy the cliques
+                    foreach(Clique clique in info.cliques)
                     {
-                        return Outcome.FAILED;
+                        cliques.Add(clique);
+                    }
+                }
+                else
+                {
+                    cliques = cliques.Intersect(info.cliques).ToList();
+                }
+            }
+
+            return cliques;
+        }
+
+        public List<Clique> getCliques(int undecidedConditions)
+        {
+            List<Clique> desiredCliques = new List<Clique>();
+
+            foreach(Clique clique in cliques)
+            {
+                if (clique.getUndecidedConditions().Count == undecidedConditions)
+                {
+                    desiredCliques.Add(clique);
+                }
+            }
+
+            return desiredCliques;
+        }
+
+        public List<Bridge> findBridges(ConditionInfo info)
+        {
+            List<Bridge> bridges = new List<Bridge>();
+
+            foreach(Clique clique in cliques)
+            {
+                if (!clique.hasCondition(info)) 
+                {
+                    List<ConditionInfo> undecidedConditions = clique.getUndecidedConditions();
+
+                    if (undecidedConditions.Count == 2)
+                    {
+                        foreach(Clique commonClique in getCommonCliques(info, undecidedConditions[0]))
+                        {
+                            bridges.Add(new Bridge(commonClique, info, undecidedConditions[0], undecidedConditions[1]));
+                        }
+
+                        foreach(Clique commonClique in getCommonCliques(info, undecidedConditions[1]))
+                        {
+                            bridges.Add(new Bridge(commonClique, info, undecidedConditions[1], undecidedConditions[0]));
+                        }
                     }
                 }
             }
 
-            return Outcome.UPDATED;
+            return bridges;
         }
 
-        //returns false if fails
-        public Outcome addInitialNumber(int row, int col, int number)
+        public Outcome applyBridge(Bridge bridge)
         {
-            initialNumbers[row, col] = number;
-            allNumbers[row, col] = number;
-            return conditions[row, col, number - 1].setStatus(Condition.Status.SATISFIED);
+            return bridge.clique.removeAllBut(new List<ConditionInfo>() { bridge.start, bridge.end });
         }
 
-        public string getNumbersString()
-        {
-            string numbersStr = "";
-            for (int row = 0; row < size; row++)
-            {
-                for (int col = 0; col < size; col++)
-                {
-                    if (allNumbers[row, col] == 0)
-                    {
-                        numbersStr += "X";
-                    }
-                    else
-                    {
-                        numbersStr += allNumbers[row, col].ToString();
-                    }
-                }
-            }
-            return numbersStr;
-        }
     }
 }

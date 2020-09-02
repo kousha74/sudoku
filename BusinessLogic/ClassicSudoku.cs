@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Sudoku.BusinessLogic
 {
-    class ClassicSudoku: AbstractSudoku 
+    class ClassicSudoku: SquareSudoku 
     {
         //tbd replace with factory
         private static ClassicSudoku instance = null;
@@ -13,7 +13,7 @@ namespace Sudoku.BusinessLogic
         private ClassicSudoku()
             :base(9)
         {
-
+            init(createCliques());
         }
 
         public static ClassicSudoku Instance
@@ -28,9 +28,9 @@ namespace Sudoku.BusinessLogic
             }
         }
 
-        public override List<Clique> createCliques()
+        public List<RawData> createCliques()
         {
-            List<Clique> cliques = new List<Clique>();
+            List<RawData> cliques = new List<RawData>();
 
             //every cell has a clique
             int row;
@@ -41,12 +41,12 @@ namespace Sudoku.BusinessLogic
             {
                 for (col = 0; col < size; col++)
                 {
-                    Clique clique = new Clique(size);
+                    List<Condition> conditions = new List<Condition>();
                     for (number = 0; number < size; number++)
                     {
-                        clique.addCondition(conditions[row, col, number]);
+                        conditions.Add(boardConditions[row, col, number]);
                     }
-                    cliques.Add(clique);
+                    cliques.Add(new RawData(conditions, "Cell(" + row.ToString() + "," + col.ToString() + ")" ));
                 }
             }
 
@@ -55,12 +55,12 @@ namespace Sudoku.BusinessLogic
             {
                 for (number = 0; number < size; number++)
                 {
-                    Clique clique = new Clique(size);
+                    List<Condition> conditions = new List<Condition>();
                     for (col = 0; col < size; col++)
                     {
-                        clique.addCondition(conditions[row, col, number]);
+                        conditions.Add(boardConditions[row, col, number]);
                     }
-                    cliques.Add(clique);
+                    cliques.Add(new RawData(conditions, "Row: " + row.ToString() + ", Number: " + number.ToString()));
                 }
             }
 
@@ -69,12 +69,12 @@ namespace Sudoku.BusinessLogic
             {
                 for (number = 0; number < size; number++)
                 {
-                    Clique clique = new Clique(size);
+                    List<Condition> conditions = new List<Condition>();
                     for (row = 0; row < size; row++)
                     {
-                        clique.addCondition(conditions[row, col, number]);
+                        conditions.Add(boardConditions[row, col, number]);
                     }
-                    cliques.Add(clique);
+                    cliques.Add(new RawData(conditions, "Col: " + col.ToString() + ", Number: " + number.ToString()));
                 }
             }
 
@@ -85,58 +85,17 @@ namespace Sudoku.BusinessLogic
                 {
                     for (number = 0; number < size; number++)
                     {
-                        Clique clique = new Clique(size);
-
-                        foreach(Condition condition in getBoxConditions(boxRow, boxCol, number))
+                        List<Condition> conditions = new List<Condition>();
+                        foreach (Condition condition in getBoxConditions(boxRow, boxCol, number))
                         {
-                            clique.addCondition(condition);
+                            conditions.Add(condition);
                         }
-                        cliques.Add(clique);
+                        cliques.Add(new RawData(conditions, "BOX(" + boxRow.ToString() + "," + boxCol.ToString() + "), Number: " + number.ToString()));
                     }
                 }
             }
 
             return cliques;
-        }
-
-        public override bool areNeighbors(Condition condition1, Condition condition2)
-        {
-            if (condition1.number != condition2.number)
-            {
-                if ((condition1.row == condition2.row) && (condition1.col == condition2.col))
-                {
-                    return true;
-                }
-            }
-            else
-            {
-                if (condition1.row == condition2.row)
-                {
-                    return true;
-                }
-
-                if (condition1.col == condition2.col)
-                {
-                    return true;
-                }
-
-                if ((getBoxRow(condition1) == getBoxRow(condition2)) && (getBoxCol(condition1) == getBoxCol(condition2)))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public int getBoxRow(Condition condition)
-        {
-            return condition.row / 3;
-        }
-
-        public int getBoxCol(Condition condition)
-        {
-            return condition.col / 3;
         }
 
         public List<Condition> getBoxConditions(int boxRow, int boxCol, int number)
@@ -146,7 +105,7 @@ namespace Sudoku.BusinessLogic
             {
                 for (int col = boxCol * 3; col < boxCol * 3 + 3; col++)
                 {
-                    boxConditions.Add(conditions[row, col, number]);
+                    boxConditions.Add(boardConditions[row, col, number]);
                 }
             }
 
