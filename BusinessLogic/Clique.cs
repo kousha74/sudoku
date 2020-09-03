@@ -57,25 +57,6 @@ namespace Sudoku.BusinessLogic
             return count;
         }
 
-        //checks of the other clique has all the UNDECIDED conditions
-        public bool isSubsetOf(Clique other)
-        {
-          /*  if ((!other.active) || (!active))
-            {
-                return false;
-            }
-
-            foreach (Condition condition in conditions)
-            {
-                if ((condition.GetStatus() == Condition.Status.UNDECIDED) && (!other.hasCondition(condition)))
-                {
-                    return false;
-                }
-            }*/
-
-            return true;
-        }
-
         public bool hasCondition(ConditionInfo otherCondition)
         {
             foreach(ConditionInfo conditionInfo in conditions)
@@ -173,6 +154,7 @@ namespace Sudoku.BusinessLogic
             if (undecidedConditions.Count == 1)
             {
                 active = false;
+                abstractSudoku.sendString("Clique: " + name + " Single");
                 return undecidedConditions[0].setStatus(Status.SATISFIED);
             }
 
@@ -220,6 +202,17 @@ namespace Sudoku.BusinessLogic
 
                                 case Outcome.NO_CHANGE:
                                     break;
+                            }
+
+                            //for logging only
+                            if (outcome == Outcome.UPDATED)
+                            {
+                                abstractSudoku.onPairFound(new List<Condition>() {
+                                bridge1.start.condition,
+                                bridge1.end.condition,
+                                bridge2.start.condition,
+                                bridge2.end.condition,
+                                });
                             }
                         }
                     }

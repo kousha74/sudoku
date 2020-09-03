@@ -24,11 +24,11 @@ namespace Sudoku
 
         private Random R;
 
-        private float realx;
+        private float xOffset;
 
-        private float realy;
+        private float yOffset;
 
-        private float realw;
+        private float boardWidth;
 
         private int hitx = -1;
 
@@ -165,9 +165,9 @@ namespace Sudoku
                 return;
             }
 
-            int new_hitx = (int)Math.Floor((Location.X - realx) / realw * 9.0);
+            int new_hitx = (int)Math.Floor((Location.X - xOffset) / boardWidth * 9.0);
 
-            int new_hity = (int)Math.Floor((Location.Y - realy) / realw * 9.0);
+            int new_hity = (int)Math.Floor((Location.Y - yOffset) / boardWidth * 9.0);
 
             if (new_hitx < 0 || new_hitx > 8 || new_hity < 0 || new_hity > 8)
             {
@@ -533,6 +533,7 @@ namespace Sudoku
             Brush BG;
 
             Brush Selected = new Pen(Color.BurlyWood).Brush;
+            Brush highlightedBrush = new Pen(Color.Pink).Brush;
 
             Selected = new SolidBrush(Color.FromArgb(64, Color.RoyalBlue));
 
@@ -564,7 +565,7 @@ namespace Sudoku
 
             float h = G.VisibleClipBounds.Height;
 
-            float min = Math.Min(w, h);
+            float min = Math.Min(w*(float)0.75, h);
 
             float centre_x = w / 2;
 
@@ -576,19 +577,21 @@ namespace Sudoku
 
             float m = 50;
 
-            realx = startx + m;
+            xOffset = startx + m;
+            xOffset = w * (float)0.25 + m;
 
-            realy = starty + m;
+            yOffset = starty + m;
 
-            realw = min - 2 * m;
+            boardWidth = min - 2 * m;
+            float cellWidth = boardWidth / 9;
 
-            if (realw <= 0) return;
+            if (boardWidth <= 0) return;
 
-            float error_circle_m = realw / 9 * 0.95f;
+            float error_circle_m = boardWidth / 9 * 0.95f;
 
-            Font F = new Font("Arial", realw / 20);
+            Font F = new Font("Arial", boardWidth / 20);
 
-            Font Fsmall = new Font("Arial", realw / 72);
+            Font Fsmall = new Font("Arial", boardWidth / 72);
 
             G.TranslateTransform(centre_x, centre_y);
 
@@ -596,9 +599,9 @@ namespace Sudoku
 
             G.TranslateTransform(-centre_x, -centre_y);
 
-            G.FillRectangle(Brushes.White, realx, realy, realw, realw);
+            G.FillRectangle(Brushes.White, xOffset, yOffset, boardWidth, boardWidth);
 
-            G.DrawRectangle(Border1, realx, realy, realw, realw);
+            G.DrawRectangle(Border1, xOffset, yOffset, boardWidth, boardWidth);
 
             if (sw == 5)
             {
@@ -608,117 +611,125 @@ namespace Sudoku
 
             string num = "";
 
+            //drawing boxes
+
             for (float i = 0; i < 3; i++)
             {
                 for (float j = 0; j < 3; j++)
                 {
-                    G.DrawRectangle(Border1, realx + realw * i / 3, realy + realw * j / 3, realw / 3, realw / 3);
+                    G.DrawRectangle(Border1, xOffset + boardWidth * i / 3, yOffset + boardWidth * j / 3, boardWidth / 3, boardWidth / 3);
 
                     if ((i + j) % 2 == 0) BG = BG1; else BG = BG2;
 
-                    G.FillRectangle(BG, realx + realw * i / 3, realy + realw * j / 3, realw / 3, realw / 3);
-
-                    for (float i2 = 0; i2 < 3; i2++)
-                    {
-                        for (float j2 = 0; j2 < 3; j2++)
-                        {
-                            if (i * 3 + i2 == hitx && j * 3 + j2 == hity) G.FillRectangle(Selected, realx + realw * (i / 3 + i2 / 9), realy + realw * (j / 3 + j2 / 9), realw / 9, realw / 9);
-
-                            G.DrawRectangle(Border2, realx + realw * (i / 3 + i2 / 9), realy + realw * (j / 3 + j2 / 9), realw / 9, realw / 9);
-
-                            int index_i = Convert.ToInt32(i * 3 + i2);
-
-                            int index_j = Convert.ToInt32(j * 3 + j2);
-
-                            num = s[index_j, index_i].ToString();
-
-                            num = "";
-
-                            int number = classicSudoku.getInitialNumber(index_j, index_i);
-
-                            if (number!=0)
-                            {
-                                num = number.ToString();
-                                FontColor = FontColor1;
-                            }
-                            else
-                            {
-                                number = classicSudoku.getNumber(index_j, index_i);
-                                if (number != 0)
-                                {
-                                    num = number.ToString();
-                                    FontColor = FontColor2;
-                                }
-                            }
-
-                            //num = classicSudoku.getInitialNumber(index_j, index_i).ToString();
-
-                            //if (num == "0") num = "";
-
-                            //if (f[index_j, index_i] == 1) FontColor = FontColor1;
-
-                            //if (f[index_j, index_i] == 0) FontColor = FontColor2;
-
-                            SizeF size_num = G.MeasureString(num, F);
-
-                            float num_x = realx + realw * (i / 3 + i2 / 9) + (realw / 9 - size_num.Width) / 2;
-
-                            float num_y = realy + realw * (j / 3 + j2 / 9) + (realw / 9 - size_num.Height) / 2;
-
-                            // Rectangles: x for number, y for hints and z for error circle
-
-                            RectangleF x = new RectangleF(num_x, num_y, size_num.Width, size_num.Height);
-
-                            RectangleF y = new RectangleF(realx + realw * (i / 3 + i2 / 9), realy + realw * (j / 3 + j2 / 9), realw / 9, realw / 9);
-
-                            RectangleF z = new RectangleF(realx + realw * (i / 3 + i2 / 9) + error_circle_m, realy + realw * (j / 3 + j2 / 9) + error_circle_m, realw / 9 - 2 * error_circle_m, realw / 9 - 2 * error_circle_m);
-
-
-                            float num_centre_x = num_x + size_num.Width / 2;
-
-                            float num_centre_y = num_y + size_num.Height / 2;
-
-                            G.TranslateTransform(num_centre_x, num_centre_y);
-
-                            G.RotateTransform(-angle);
-
-                            G.TranslateTransform(-num_centre_x, -num_centre_y);
-
-                            G.DrawString(num, F, FontColor, x);
-
-                            G.TranslateTransform(num_centre_x, num_centre_y);
-
-                            G.RotateTransform(+angle);
-
-                            G.TranslateTransform(-num_centre_x, -num_centre_y);
-
-                            if (e[index_j, index_i] == 1 && ShowErrors) G.DrawEllipse(Error, z);
-
-                            string hints = "";
-
-                            for (int b = 0; b < 9; b++)
-                            {
-                                if (((a[index_j, index_i] >> b) & 1) == 1)
-                                {
-                                    hints = hints + (b + 1).ToString();
-                                }
-                            }
-
-                            hints = classicSudoku.getCellHints(index_j, index_i);
-                            G.DrawString(hints, Fsmall, SmallFontColor, y);
-
-                        }
-                    }
-
+                    G.FillRectangle(BG, xOffset + boardWidth * i / 3, yOffset + boardWidth * j / 3, boardWidth / 3, boardWidth / 3);
                 }
 
             }
+
+            //highlighted Cells
+            foreach (Point point in classicSudoku.highlightedCells)
+            {
+                G.FillRectangle(highlightedBrush, xOffset + cellWidth * point.X, yOffset + cellWidth * point.Y, cellWidth, cellWidth);
+            }
+
+
+            for (float i = 0; i < 9; i++)
+            {
+                for (float j = 0; j < 9; j++)
+                {
+                    if (i == hitx && j == hity) G.FillRectangle(Selected, xOffset + cellWidth * i, yOffset + cellWidth * j, cellWidth, cellWidth);
+
+                    G.DrawRectangle(Border2, xOffset + cellWidth * i, yOffset + cellWidth*j, cellWidth, cellWidth);
+
+                    int index_i = Convert.ToInt32(i);
+
+                    int index_j = Convert.ToInt32(j);
+
+                    num = s[index_j, index_i].ToString();
+
+                    num = "";
+
+                    int number = classicSudoku.getInitialNumber(index_j, index_i);
+
+                    if (number != 0)
+                    {
+                        num = number.ToString();
+                        FontColor = FontColor1;
+                    }
+                    else
+                    {
+                        number = classicSudoku.getNumber(index_j, index_i);
+                        if (number != 0)
+                        {
+                            num = number.ToString();
+                            FontColor = FontColor2;
+                        }
+                    }
+
+                    //num = classicSudoku.getInitialNumber(index_j, index_i).ToString();
+
+                    //if (num == "0") num = "";
+
+                    //if (f[index_j, index_i] == 1) FontColor = FontColor1;
+
+                    //if (f[index_j, index_i] == 0) FontColor = FontColor2;
+
+                    SizeF size_num = G.MeasureString(num, F);
+
+                    float num_x = xOffset + cellWidth * i + (boardWidth / 9 - size_num.Width) / 2;
+
+                    float num_y = yOffset + cellWidth * j + (boardWidth / 9 - size_num.Height) / 2;
+
+                    // Rectangles: x for number, y for hints and z for error circle
+
+                    RectangleF x = new RectangleF(num_x, num_y, size_num.Width, size_num.Height);
+
+                    RectangleF y = new RectangleF(xOffset + cellWidth * i, yOffset + cellWidth * j , cellWidth, cellWidth);
+
+                    RectangleF z = new RectangleF(xOffset + cellWidth * i + error_circle_m, yOffset + cellWidth * j + error_circle_m, boardWidth / 9 - 2 * error_circle_m, boardWidth / 9 - 2 * error_circle_m);
+
+                    float num_centre_x = num_x + size_num.Width / 2;
+
+                    float num_centre_y = num_y + size_num.Height / 2;
+
+                    G.TranslateTransform(num_centre_x, num_centre_y);
+
+                    G.RotateTransform(-angle);
+
+                    G.TranslateTransform(-num_centre_x, -num_centre_y);
+
+                    G.DrawString(num, F, FontColor, x);
+
+                    G.TranslateTransform(num_centre_x, num_centre_y);
+
+                    G.RotateTransform(+angle);
+
+                    G.TranslateTransform(-num_centre_x, -num_centre_y);
+
+                    if (e[index_j, index_i] == 1 && ShowErrors) G.DrawEllipse(Error, z);
+
+                    string hints = "";
+
+                    for (int b = 0; b < 9; b++)
+                    {
+                        if (((a[index_j, index_i] >> b) & 1) == 1)
+                        {
+                            hints = hints + (b + 1).ToString();
+                        }
+                    }
+
+                    hints = classicSudoku.getCellHints(index_j, index_i);
+                    G.DrawString(hints, Fsmall, SmallFontColor, y);
+
+                }
+            }
+
 
             //if (solved == 1) ;
 
             if (DisplayMessage)
             {
-                RenderMessageBox(G, msg_text1, msg_text2, realw / 22, realw / 36, w, h, realx, realy, realw);
+                RenderMessageBox(G, msg_text1, msg_text2, boardWidth / 22, boardWidth / 36, w, h, xOffset, yOffset, boardWidth);
             }
 
             //RenderMessageBox(G, "14 Possible Deductions", "Press any key to continue", realw / 22, realw / 36, w, h, realx, realy, realw);

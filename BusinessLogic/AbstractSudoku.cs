@@ -12,7 +12,7 @@ namespace Sudoku.BusinessLogic
 
         public readonly int size;
         public readonly int[] bitCounter;
-
+        private IAbstractSudoku listener = null;
         public AbstractSudoku(int size)
         {
             int allCombinations = 2 ^ size;
@@ -25,7 +25,13 @@ namespace Sudoku.BusinessLogic
             this.size = size;
         }
 
-        public abstract void onConditionSatidfied(Condition condition);
+        public abstract void onConditionChanged(Condition condition, Status status);
+        public abstract void onPairFound(List<Condition> conditions);
+
+        public void setListener(IAbstractSudoku listener)
+        {
+            this.listener = listener;
+        }
 
         public bool init(List<RawData> data)
         {
@@ -207,6 +213,19 @@ namespace Sudoku.BusinessLogic
         public Outcome applyBridge(Bridge bridge)
         {
             return bridge.clique.removeAllBut(new List<ConditionInfo>() { bridge.start, bridge.end });
+        }
+
+        public void sendString(string str)
+        {
+            if (listener != null)
+            {
+                listener.onNewString(str);
+            }
+        }
+
+        public interface IAbstractSudoku
+        {
+            void onNewString(string str);
         }
 
     }

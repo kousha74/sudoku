@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 
@@ -10,6 +11,9 @@ namespace Sudoku.BusinessLogic
         protected readonly ConditionSquareSudoku[,,] boardConditions;
         protected int[,] initialNumbers;
         protected int[,] allNumbers;
+
+        //for UI only
+        public List<Point> highlightedCells = new List<Point>();
 
         public SquareSudoku(int size)
             :base(size)
@@ -148,12 +152,39 @@ namespace Sudoku.BusinessLogic
             return Outcome.UPDATED;
         }
 
-        public override void onConditionSatidfied(Condition condition)
+        public override void onConditionChanged(Condition condition, Status status)
         {
             ConditionSquareSudoku c = (ConditionSquareSudoku)condition;
 
-            allNumbers[c.row, c.col] = c.number + 1;
+            switch (status)
+            {
+                case Status.SATISFIED:
+                    allNumbers[c.row, c.col] = c.number + 1;
+                    sendString("Cell(" + c.row.ToString() + "," + c.col.ToString() + "): is set to " + (c.number + 1).ToString());
+                    highlightedCells.Clear();
+                    highlightedCells.Add(new Point(c.col, c.row));
+                    break;
+
+                case Status.NOT_SATISFIED:
+                    sendString("Cell(" + c.row.ToString() + "," + c.col.ToString() + "): cannot be " + (c.number + 1).ToString());
+                    break;
+            }
         }
+
+        public override void onPairFound(List<Condition> conditions)
+        {
+            string str = "";
+            highlightedCells.Clear();
+            foreach (Condition condition in conditions)
+            {
+                ConditionSquareSudoku c = (ConditionSquareSudoku)condition;
+                str +=  "Cell(" + c.row.ToString() + "," + c.col.ToString() + "),";
+                highlightedCells.Add(new Point(c.col, c.row));
+            }
+            sendString(str);
+        }
+
+
 
     }
 }

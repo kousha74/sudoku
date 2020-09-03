@@ -53,6 +53,7 @@
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+            this.listBox1 = new System.Windows.Forms.ListBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -72,9 +73,9 @@
             this.pictureBox1.Size = new System.Drawing.Size(686, 630);
             this.pictureBox1.TabIndex = 1;
             this.pictureBox1.TabStop = false;
-            this.pictureBox1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseDown);
-            this.pictureBox1.Paint += new System.Windows.Forms.PaintEventHandler(this.pictureBox1_Paint);
             this.pictureBox1.SizeChanged += new System.EventHandler(this.pictureBox1_SizeChanged);
+            this.pictureBox1.Paint += new System.Windows.Forms.PaintEventHandler(this.pictureBox1_Paint);
+            this.pictureBox1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseDown);
             // 
             // menuStrip1
             // 
@@ -89,8 +90,8 @@
             this.menuStrip1.TabIndex = 3;
             this.menuStrip1.Text = "menuStrip1";
             this.menuStrip1.MouseEnter += new System.EventHandler(this.menuStrip1_MouseEnter);
-            this.menuStrip1.MouseHover += new System.EventHandler(this.menuStrip1_MouseHover);
             this.menuStrip1.MouseLeave += new System.EventHandler(this.menuStrip1_MouseLeave);
+            this.menuStrip1.MouseHover += new System.EventHandler(this.menuStrip1_MouseHover);
             // 
             // fileToolStripMenuItem
             // 
@@ -102,7 +103,7 @@
             this.toolStripSeparator,
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(49, 20);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(52, 20);
             this.fileToolStripMenuItem.Text = "&Puzzle";
             // 
             // newToolStripMenuItem1
@@ -111,7 +112,7 @@
             this.newToolStripMenuItem1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.newToolStripMenuItem1.Name = "newToolStripMenuItem1";
             this.newToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
-            this.newToolStripMenuItem1.Size = new System.Drawing.Size(151, 22);
+            this.newToolStripMenuItem1.Size = new System.Drawing.Size(154, 22);
             this.newToolStripMenuItem1.Text = "&New";
             this.newToolStripMenuItem1.Click += new System.EventHandler(this.newToolStripMenuItem1_Click);
             // 
@@ -121,14 +122,14 @@
             this.openToolStripMenuItem1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.openToolStripMenuItem1.Name = "openToolStripMenuItem1";
             this.openToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this.openToolStripMenuItem1.Size = new System.Drawing.Size(151, 22);
+            this.openToolStripMenuItem1.Size = new System.Drawing.Size(154, 22);
             this.openToolStripMenuItem1.Text = "&Open";
             this.openToolStripMenuItem1.Click += new System.EventHandler(this.openToolStripMenuItem1_Click);
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(148, 6);
+            this.toolStripSeparator2.Size = new System.Drawing.Size(151, 6);
             // 
             // saveToolStripMenuItem1
             // 
@@ -136,19 +137,19 @@
             this.saveToolStripMenuItem1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.saveToolStripMenuItem1.Name = "saveToolStripMenuItem1";
             this.saveToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveToolStripMenuItem1.Size = new System.Drawing.Size(151, 22);
+            this.saveToolStripMenuItem1.Size = new System.Drawing.Size(154, 22);
             this.saveToolStripMenuItem1.Text = "&Save As";
             this.saveToolStripMenuItem1.Click += new System.EventHandler(this.saveToolStripMenuItem1_Click);
             // 
             // toolStripSeparator
             // 
             this.toolStripSeparator.Name = "toolStripSeparator";
-            this.toolStripSeparator.Size = new System.Drawing.Size(148, 6);
+            this.toolStripSeparator.Size = new System.Drawing.Size(151, 6);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
             this.exitToolStripMenuItem.Text = "E&xit";
             // 
             // editToolStripMenuItem
@@ -157,7 +158,7 @@
             this.copyToolStripMenuItem,
             this.pasteToolStripMenuItem});
             this.editToolStripMenuItem.Name = "editToolStripMenuItem";
-            this.editToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
+            this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
             this.editToolStripMenuItem.Text = "&Edit";
             // 
             // copyToolStripMenuItem
@@ -166,7 +167,7 @@
             this.copyToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.copyToolStripMenuItem.Name = "copyToolStripMenuItem";
             this.copyToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.C)));
-            this.copyToolStripMenuItem.Size = new System.Drawing.Size(245, 22);
+            this.copyToolStripMenuItem.Size = new System.Drawing.Size(263, 22);
             this.copyToolStripMenuItem.Text = "&Copy Puzzle to Clipboard";
             this.copyToolStripMenuItem.Click += new System.EventHandler(this.copyToolStripMenuItem_Click);
             // 
@@ -176,7 +177,7 @@
             this.pasteToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.pasteToolStripMenuItem.Name = "pasteToolStripMenuItem";
             this.pasteToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.V)));
-            this.pasteToolStripMenuItem.Size = new System.Drawing.Size(245, 22);
+            this.pasteToolStripMenuItem.Size = new System.Drawing.Size(263, 22);
             this.pasteToolStripMenuItem.Text = "&Paste Puzzle from Clipboard";
             this.pasteToolStripMenuItem.Click += new System.EventHandler(this.pasteToolStripMenuItem_Click);
             // 
@@ -189,13 +190,13 @@
             this.checkSolvabilityToolStripMenuItem,
             this.checkSolutionsCountToolStripMenuItem});
             this.solverToolStripMenuItem.Name = "solverToolStripMenuItem";
-            this.solverToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
+            this.solverToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
             this.solverToolStripMenuItem.Text = "&Tools";
             // 
             // solveToolStripMenuItem
             // 
             this.solveToolStripMenuItem.Name = "solveToolStripMenuItem";
-            this.solveToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
+            this.solveToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.solveToolStripMenuItem.Text = "Sol&ve Puzzle";
             this.solveToolStripMenuItem.Click += new System.EventHandler(this.solveToolStripMenuItem_Click);
             // 
@@ -203,27 +204,27 @@
             // 
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
             this.toolStripMenuItem1.ShortcutKeys = System.Windows.Forms.Keys.F4;
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(181, 22);
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(195, 22);
             this.toolStripMenuItem1.Text = "Solve Single Step";
             this.toolStripMenuItem1.Click += new System.EventHandler(this.toolStripMenuItem1_Click);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(178, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(192, 6);
             // 
             // checkSolvabilityToolStripMenuItem
             // 
             this.checkSolvabilityToolStripMenuItem.Name = "checkSolvabilityToolStripMenuItem";
             this.checkSolvabilityToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F3;
-            this.checkSolvabilityToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
+            this.checkSolvabilityToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.checkSolvabilityToolStripMenuItem.Text = "Check Progress";
             this.checkSolvabilityToolStripMenuItem.Click += new System.EventHandler(this.checkSolvabilityToolStripMenuItem_Click);
             // 
             // checkSolutionsCountToolStripMenuItem
             // 
             this.checkSolutionsCountToolStripMenuItem.Name = "checkSolutionsCountToolStripMenuItem";
-            this.checkSolutionsCountToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
+            this.checkSolutionsCountToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.checkSolutionsCountToolStripMenuItem.Text = "Check Solutions Count";
             this.checkSolutionsCountToolStripMenuItem.Click += new System.EventHandler(this.checkSolutionsCountToolStripMenuItem_Click);
             // 
@@ -232,13 +233,13 @@
             this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.aboutToolStripMenuItem});
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(40, 20);
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.helpToolStripMenuItem.Text = "&Help";
             // 
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(115, 22);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.aboutToolStripMenuItem.Text = "&About...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
             // 
@@ -251,11 +252,20 @@
             // 
             this.saveFileDialog1.Filter = "Sudoku Puzzle (*.sdp) |*.sdp";
             // 
+            // listBox1
+            // 
+            this.listBox1.FormattingEnabled = true;
+            this.listBox1.Location = new System.Drawing.Point(12, 38);
+            this.listBox1.Name = "listBox1";
+            this.listBox1.Size = new System.Drawing.Size(257, 277);
+            this.listBox1.TabIndex = 4;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(686, 654);
+            this.Controls.Add(this.listBox1);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.menuStrip1);
             this.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -263,11 +273,11 @@
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Sudoku";
+            this.Activated += new System.EventHandler(this.Form1_Activated);
             this.Deactivate += new System.EventHandler(this.Form1_Deactivate);
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.Form1_Paint);
-            this.Activated += new System.EventHandler(this.Form1_Activated);
-            this.Leave += new System.EventHandler(this.Form1_Leave);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
+            this.Leave += new System.EventHandler(this.Form1_Leave);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
@@ -301,6 +311,7 @@
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
         private System.Windows.Forms.ToolStripMenuItem checkSolutionsCountToolStripMenuItem;
+        private System.Windows.Forms.ListBox listBox1;
     }
 }
 

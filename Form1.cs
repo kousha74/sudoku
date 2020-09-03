@@ -10,7 +10,7 @@ using System.Media;
 
 namespace Sudoku
 {
-    public partial class Form1 : Form
+    public partial class Form1 : Form, BusinessLogic.AbstractSudoku.IAbstractSudoku
     {
         Sudoku S;
 
@@ -43,6 +43,8 @@ namespace Sudoku
             C = new Communicator();
 
             C.StatusChange += new Communicator.MethodDelegate(C_StatusChange);
+
+            BusinessLogic.ClassicSudoku.Instance.setListener(this);
 
         }
 
@@ -203,8 +205,9 @@ namespace Sudoku
 
         private void toolStripMenuItem1_Click(object sender, EventArgs e)
         {
+            listBox1.Items.Insert(0,"Solving one step");
             S.SolveStep(Sudoku.SolveMethods.All);
-          
+            
             pictureBox1.Invalidate();
         }
 
@@ -326,11 +329,9 @@ namespace Sudoku
             pictureBox1.Invalidate();
         }
 
-   
-
-
-
-
-
+        public void onNewString(string str)
+        {
+            listBox1.Items.Insert(0, str);
+        }
     }
 }

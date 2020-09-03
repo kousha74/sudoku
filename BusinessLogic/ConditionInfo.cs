@@ -65,11 +65,10 @@ namespace Sudoku.BusinessLogic
         {
             Outcome outcome = Outcome.UPDATED;
 
+            abstractSudoku.onConditionChanged(condition, status);
+
             if (status == Status.SATISFIED)
             {
-
-                abstractSudoku.onConditionSatidfied(condition);
-
                 foreach (ConditionInfo conditionInfo in neighbors)
                 {
                     if (conditionInfo.setStatus(Status.NOT_SATISFIED) == Outcome.FAILED)
