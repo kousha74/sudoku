@@ -7,25 +7,10 @@ namespace Sudoku.BusinessLogic
 {
     class ClassicSudoku: SquareSudoku 
     {
-        //tbd replace with factory
-        private static ClassicSudoku instance = null;
-
-        private ClassicSudoku()
-            :base(9)
+        public ClassicSudoku()
+            :base(9, SudokuType.CLASSIC)
         {
             init(createCliques());
-        }
-
-        public static ClassicSudoku Instance
-        {
-            get
-            {
-                if (instance == null)
-                {
-                    instance = new ClassicSudoku();
-                }
-                return instance;
-            }
         }
 
         public List<RawData> createCliques()

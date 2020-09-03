@@ -15,8 +15,8 @@ namespace Sudoku.BusinessLogic
         //for UI only
         public List<Point> highlightedCells = new List<Point>();
 
-        public SquareSudoku(int size)
-            :base(size)
+        public SquareSudoku(int size, AbstractSudoku.SudokuType sudokuType)
+            :base(size, sudokuType)
         {
             boardConditions = new ConditionSquareSudoku[size, size, size];
 
@@ -101,14 +101,14 @@ namespace Sudoku.BusinessLogic
             return hints;
         }
 
-        public Outcome addInitialNumber(int row, int col, int number)
+        public override Outcome addInitialNumber(int row, int col, int number)
         {
             initialNumbers[row, col] = number;
             allNumbers[row, col] = number;
             return setStatus(boardConditions[row, col, number - 1],Status.SATISFIED);
         }
 
-        public string getNumbersString()
+        public override string getNumbersString()
         {
             string numbersStr = "";
             for (int row = 0; row < size; row++)
@@ -128,7 +128,7 @@ namespace Sudoku.BusinessLogic
             return numbersStr;
         }
 
-        public Outcome setInitialNumbers(List<int> numbers)
+        public override Outcome setInitialNumbers(List<int> numbers)
         {
             Reset();
 

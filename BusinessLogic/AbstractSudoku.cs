@@ -13,7 +13,11 @@ namespace Sudoku.BusinessLogic
         public readonly int size;
         public readonly int[] bitCounter;
         private IAbstractSudoku listener = null;
-        public AbstractSudoku(int size)
+        public enum SudokuType { CLASSIC };
+
+        public readonly SudokuType sudokuType;
+
+        public AbstractSudoku(int size, SudokuType sudokuType)
         {
             int allCombinations = 2 ^ size;
             bitCounter = new int[allCombinations];
@@ -23,10 +27,14 @@ namespace Sudoku.BusinessLogic
             }
 
             this.size = size;
+            this.sudokuType = sudokuType;
         }
 
         public abstract void onConditionChanged(Condition condition, Status status);
         public abstract void onPairFound(List<Condition> conditions);
+        public abstract Outcome addInitialNumber(int row, int col, int number);
+        public abstract Outcome setInitialNumbers(List<int> numbers);
+        public abstract string getNumbersString();
 
         public void setListener(IAbstractSudoku listener)
         {

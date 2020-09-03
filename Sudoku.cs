@@ -12,15 +12,7 @@ namespace Sudoku
     {
         #region Class Decelerations
 
-        BusinessLogic.ClassicSudoku classicSudoku = BusinessLogic.ClassicSudoku.Instance;
-
-        public int[,] s; // sudoku numbers
-
-        private int[,] a; // aids
-
-        private int[,] f; // facts
-
-        private int[,] e; // errors
+        BusinessLogic.AbstractSudoku abstractSudoku = null;
 
         private Random R;
 
@@ -30,9 +22,7 @@ namespace Sudoku
 
         private float boardWidth;
 
-        private int hitx = -1;
-
-        private int hity;
+        private Point hitPos = new Point(-1,-1);
 
         public int sw = 0;
 
@@ -69,90 +59,13 @@ namespace Sudoku
 
         public bool ShowErrors = false;
 
-        public enum SolveMethods
-        {
-            All = 65535,
-            NakedSingles = 1,
-            HiddenSingles = 2,
-            BlockHiddenSingles = 4,
-
-        }
-
-        public class SolutionStep
-        {
-            public int x;
-            public int y;
-            public int num;
-
-            public SolutionStep()
-            {
-                x = 0; y = 0; num = 0;
-            }
-
-            public SolutionStep(int x, int y, int num)
-            {
-                this.x = x;
-                this.y = y;
-                this.num = num;
-            }
-        };
-
-        public class SolutionStepList
-        {
-            private List<SolutionStep> L;
-
-            public SolutionStepList()
-            {
-                L = new List<SolutionStep>();
-            }
-
-            private bool Search(SolutionStep ss)
-            {
-                for (int i = 0; i < L.Count; i++)
-                {
-                    SolutionStep present = L[i];
-
-                    if (ss.x == present.x && ss.y == present.y && ss.num == present.num) return true;
-                }
-
-                return false;
-            }
-
-            public void Add(SolutionStep ss)
-            {
-                // if (!Search(ss)) L.Add(ss);
-
-                L.Add(ss);
-            }
-
-            public int Count()
-            {
-                return L.Count;
-            }
-
-            public SolutionStep getItem(int index)
-            {
-                return L[index];
-            }
-
-
-        }
-
         #endregion
 
-        public Sudoku()
+        public Sudoku(BusinessLogic.AbstractSudoku abstractSudoku)
         {
-            s = new int[9, 9];
-
-            f = new int[9, 9];
-
-            a = new int[9, 9];
-
-            e = new int[9, 9];
+            this.abstractSudoku = abstractSudoku;
 
             R = new Random();
-
-            EnumeratePossibilities();
 
             return;
         }
@@ -171,43 +84,38 @@ namespace Sudoku
 
             if (new_hitx < 0 || new_hitx > 8 || new_hity < 0 || new_hity > 8)
             {
-                hitx = -1;
+                hitPos.X = -1;
 
                 return;
             }
 
-            if (new_hitx == hitx && new_hity == hity)
+            if (new_hitx == hitPos.X && new_hity == hitPos.Y)
             {
-                hitx = -1;
+                hitPos.X = -1;
             }
             else
             {
-                if (f[new_hity, new_hitx] == 0)
+                //if (f[new_hity, new_hitx] == 0)//tbd
                 {
-                    hitx = new_hitx;
+                    hitPos.X = new_hitx;
 
-                    hity = new_hity;
+                    hitPos.Y = new_hity;
                 }
             }
-
         }
 
         public void Deselect()
         {
-            hitx = -1;
+            hitPos.X = -1;
         }
 
         public void DeleteCurrentSquare()
         {
-            if (hitx != -1)
+            if (hitPos.X != -1)
             {
-                s[hity, hitx] = 0;
-                e[hity, hitx] = 0;
             }
 
-            hitx = -1;
-
-            EnumeratePossibilities();
+            hitPos.X = -1;
         }
 
         public void KeyPress(char KeyCode)
@@ -221,25 +129,21 @@ namespace Sudoku
 
             if (KeyCode < '1' || KeyCode > '9') return;
 
-            if (hitx == -1) return;
+            if (hitPos.X == -1) return;
 
-            s[hity, hitx] = KeyCode - '0';
-
-            if (classicSudoku.addInitialNumber(hity, hitx, KeyCode - '0') == BusinessLogic.Outcome.FAILED)
+            if (abstractSudoku.addInitialNumber(hitPos.Y, hitPos.X, KeyCode - '0') == BusinessLogic.Outcome.FAILED)
             {
                 MessageBox.Show("ERROR!!!!!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            e[hity, hitx] = 0;
 
-            hitx = -1;
-
-            EnumeratePossibilities();
+            hitPos.X = -1;
 
             // ComputeErrors();
 
             if (PlaySound != null) PlaySound(SudokuSound.Square);
 
-            if (isSolved())
+            //tbd
+            /*if (isSolved())
             {
                 while (hitx != -1) Application.DoEvents();
 
@@ -265,117 +169,12 @@ namespace Sudoku
 
                 if (d.Seconds > 1) duration += "s";
 
-            }
-
-
-
-        }
-
-        public void UseTemplate()
-        {
-            string game1 = "X6X1X4X5XXX83X56XX2XXXXXXX18XX4X7XX6XX6XXX3XX7XX9X1XX45XXXXXXX2XX72X69XXX4X5X8X7X"; // easy 1
-
-            game1 = "XXXX7XX6X6XXXXXX42XXX89XX15XXXXX54XX769XXX521XX19XXXXX91XX42XXX28XXXXXX3X7XX8XXXX"; // easy 2
-
-            // game1 = "XXXXXXXX547XXXXXXX85XX42XXX64X58XXXXXX79X41XXXXXX73X96XXX85XX34XXXXXXX673XXXXXXXX"; // hard 1
-
-            game1 = "829173456713645298645298173381726945976514832452839617297381564168457329534962781"; //complete game
-
-            SetGameString(game1);
+            }*/
         }
 
         public void GenerateGame()
         {
             if (PlaySound != null) PlaySound(SudokuSound.Stop);
-
-            UseTemplate();
-
-            int trials_counter = 0;
-
-            int trials_max = 100;
-
-            SolveMethods M = SolveMethods.All;
-
-            // Generating a list of filled squares
-
-            List<Point> L = new List<Point>();
-
-            for (int i = 0; i < 9; i++)
-                for (int j = 0; j < 9; j++)
-                {
-                    if (s[j, i] > 0) L.Add(new Point(i, j));
-                }
-
-            int n;
-
-            for (n = 0; n < 55; )
-            {
-                int index = R.Next(L.Count);
-
-                int x = L[index].X;
-
-                int y = L[index].Y;
-
-                int temp = s[x, y];
-
-                if (temp != 0)
-                {
-                    s[x, y] = 0;
-
-                    Sudoku S2 = CreateCopy();
-
-                    int solutionStepsCount = S2.ComputePossibleSteps(M).Count();
-
-                    bool range0Ok = ((n > 35) && (solutionStepsCount > 25));
-
-                    bool range1Ok = ((n > 15) && (solutionStepsCount > 25));
-
-                    bool range2Ok = n < 16;
-
-                    bool solutionStepsCountOk = range0Ok || range1Ok || range2Ok;
-
-                    if (solutionStepsCountOk)
-                    {
-
-                        bool isSolvable = S2.SolvePuzzle(M);
-
-                        if (isSolvable)
-                        {
-
-                            L.RemoveAt(index);
-
-                            n++;
-
-                            trials_counter = 0;
-                        }
-                        else
-                        {
-                            s[x, y] = temp;
-                        }
-
-                    }
-                    else
-                    {
-                        s[x, y] = temp;
-                    }
-                    trials_counter++;
-
-                }
-
-                if (trials_counter > trials_max) break;
-            }
-
-            ScrambleGame();
-
-            for (int i = 0; i < 9; i++)
-                for (int j = 0; j < 9; j++)
-                {
-                    if (s[i, j] == 0) f[i, j] = 0; else f[i, j] = 1;
-                }
-
-            //  SetGameString("XX7XXX5XXXXXX4XX3XXXX832X9X8XXXXX4XXX294X586XXX6XXXXX7X5X364XXXX7XX5XXXXXX3XXX2XX");
-
-            EnumeratePossibilities();
 
             starttime = DateTime.Now;
 
@@ -399,52 +198,10 @@ namespace Sudoku
             if (RequestRepaint  != null) RequestRepaint();
         }
 
-        public void ScrambleGame()
-        {
-            //0 1, 1 2, 3 4, 4 5, 6 7 7 8
-
-            int[] scramble_array = { 0, 1, 3, 4, 6, 7 };
-
-            int scrambles = 10;
-
-            for (int n = 0; n < scrambles; n++)
-            {
-                int index = R.Next(6);
-
-                int val = scramble_array[index];
-
-                SwapRows(val, val + 1);
-            }
-
-            for (int n = 0; n < scrambles; n++)
-            {
-                int index = R.Next(6);
-
-                int val = scramble_array[index];
-
-                SwapCols(val, val + 1);
-            }
-
-            ChangeSymbols();
-
-            EnumeratePossibilities();
-
-        }
 
         public string GetGameString()
         {
             string result = "";
-
-            for (int i = 0; i < 9; i++)
-            {
-                for (int j = 0; j < 9; j++)
-                {
-                    result += s[i, j].ToString();
-
-                }
-            }
-
-            result = result.Replace("0", "X");
 
             return result;
         }
@@ -464,7 +221,7 @@ namespace Sudoku
             {
                 initialNumbers.Add(Convert.ToInt32(strs[i]));
             }
-            if (classicSudoku.setInitialNumbers(initialNumbers) == BusinessLogic.Outcome.FAILED)
+            if (abstractSudoku.setInitialNumbers(initialNumbers) == BusinessLogic.Outcome.FAILED)
             {
                 MessageBox.Show("ERROR!!!!!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -474,6 +231,7 @@ namespace Sudoku
             return true;
 
         }
+
         public bool SetGameString(string game)
         {
             if (game.Length != 81) return SetGameString2(game);
@@ -497,24 +255,18 @@ namespace Sudoku
 
                 if (c == "X")
                 {
-                    s[i, j] = 0;
-                    f[i, j] = 0;
                     initialNumbers.Add(0);
                 }
                 else
                 {
-                    s[i, j] = Convert.ToInt32(c);
-                    f[i, j] = 1;
                     initialNumbers.Add(Convert.ToInt32(c));
                 }
             }
 
-            if (classicSudoku.setInitialNumbers(initialNumbers) == BusinessLogic.Outcome.FAILED)
+            if (abstractSudoku.setInitialNumbers(initialNumbers) == BusinessLogic.Outcome.FAILED)
             {
                 MessageBox.Show("ERROR!!!!!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-
-            EnumeratePossibilities();
 
             DisplayMessage = false;
 
@@ -522,7 +274,15 @@ namespace Sudoku
 
         }
 
-        public void Draw(Graphics G, float angle)
+        public void Draw(Graphics G, float angle)//tbd remove angle
+        {
+            if (abstractSudoku.sudokuType == BusinessLogic.AbstractSudoku.SudokuType.CLASSIC)
+            {
+                DrawClassicSudoku(G, angle, (BusinessLogic.ClassicSudoku)abstractSudoku );
+            }
+        }
+
+        public void DrawClassicSudoku(Graphics G, float angle, BusinessLogic.ClassicSudoku classicSudoku)
         {
             Color Background = Color.DarkKhaki;
 
@@ -637,15 +397,13 @@ namespace Sudoku
             {
                 for (float j = 0; j < 9; j++)
                 {
-                    if (i == hitx && j == hity) G.FillRectangle(Selected, xOffset + cellWidth * i, yOffset + cellWidth * j, cellWidth, cellWidth);
+                    if (i == hitPos.X && j == hitPos.Y) G.FillRectangle(Selected, xOffset + cellWidth * i, yOffset + cellWidth * j, cellWidth, cellWidth);
 
                     G.DrawRectangle(Border2, xOffset + cellWidth * i, yOffset + cellWidth*j, cellWidth, cellWidth);
 
                     int index_i = Convert.ToInt32(i);
 
                     int index_j = Convert.ToInt32(j);
-
-                    num = s[index_j, index_i].ToString();
 
                     num = "";
 
@@ -706,19 +464,10 @@ namespace Sudoku
 
                     G.TranslateTransform(-num_centre_x, -num_centre_y);
 
-                    if (e[index_j, index_i] == 1 && ShowErrors) G.DrawEllipse(Error, z);
+                    //if (e[index_j, index_i] == 1 && ShowErrors) G.DrawEllipse(Error, z);
 
-                    string hints = "";
+                    string hints = classicSudoku.getCellHints(index_j, index_i);
 
-                    for (int b = 0; b < 9; b++)
-                    {
-                        if (((a[index_j, index_i] >> b) & 1) == 1)
-                        {
-                            hints = hints + (b + 1).ToString();
-                        }
-                    }
-
-                    hints = classicSudoku.getCellHints(index_j, index_i);
                     G.DrawString(hints, Fsmall, SmallFontColor, y);
 
                 }
@@ -770,186 +519,23 @@ namespace Sudoku
 
         }
 
-        public bool CheckGame()
+
+
+        public bool SolveStep()
         {
-
-            List<int> L = new List<int>();
-
-            for (int i = 0; i < 9; i++)
-            {
-
-                // Checking rows:
-
-                L.Clear();
-
-                for (int j = 0; j < 9; j++) L.Add(s[i, j]);
-
-                if (CheckOneToNine(L) == false) return false;
-
-                // Checking rolumns:
-
-                L.Clear();
-
-                for (int j = 0; j < 9; j++) L.Add(s[j, i]);
-
-                if (CheckOneToNine(L) == false) return false;
-
-                // Checking blocks:
-
-                for (int x = 0; x < 9; x += 3)
-                {
-                    for (int y = 0; y < 9; y += 3)
-                    {
-                        L.Clear();
-
-                        for (int j = 0; j < 3; j++)
-                        {
-                            for (int k = 0; k < 3; k++)
-                            {
-                                L.Add(s[x + j, y + k]);
-
-                            }
-                        }
-
-                        if (CheckOneToNine(L) == false) return false;
-
-                    }
-
-
-                }
-
-            }
-
-            return true;
-        }
-
-        public bool checkSolvable(SolveMethods M)
-        {
-            Sudoku copy = CreateCopy();
-
-            return copy.SolvePuzzle(M);
-        }
-
-        public SolutionStepList ComputePossibleSteps(SolveMethods M)
-        {
-            EnumeratePossibilities();
-
-            SolutionStepList L = new SolutionStepList();
-
-            // Looking for naked singles
-
-            if ((M & SolveMethods.NakedSingles) > 0)
-            {
-
-                for (int i = 0; i < 9; i++)
-                {
-                    for (int j = 0; j < 9; j++)
-                    {
-                        double index = Math.Log(a[j, i], 2) + 1;
-
-                        if (index == Math.Floor(index) && a[j, i] > 0 && s[j, i] == 0)
-                        {
-                            L.Add(new SolutionStep(i, j, Convert.ToInt32(index)));
-                        }
-                    }
-                }
-            }
-
-            // Looking for hidden singles
-
-            if ((M & SolveMethods.HiddenSingles) > 0)
-            {
-                for (int i = 0; i < 9; i++)
-                {
-                    for (int j = 0; j < 9; j++)
-                    {
-                        int mask = 0;
-
-                        for (int m = 0; m < 9; m++)
-                        {
-                            if (m != j) mask |= a[m, i];
-                        }
-
-                        int match = a[j, i] & (511 - mask);
-
-                        if (s[j, i] == 0 && match > 0)
-                        {
-                            // Bingo
-
-                            double index = Math.Log(match, 2) + 1;
-
-                            L.Add(new SolutionStep(i, j, Convert.ToInt32(index)));
-                        }
-                    }
-                }
-            }
-
-            // Looking for block-hidden singles
-
-            if ((M & SolveMethods.BlockHiddenSingles) > 0)
-            {
-                for (int i = 0; i < 9; i++)
-                {
-                    for (int j = 0; j < 9; j++)
-                    {
-
-                        int blockx = i / 3;
-
-                        int blocky = j / 3;
-
-                        int mask = 0;
-
-                        for (int m = 0; m < 3; m++)
-                        {
-                            for (int n = 0; n < 3; n++)
-                            {
-                                int xindex = blockx * 3 + m;
-
-                                int yindex = blocky * 3 + n;
-
-                                if (yindex != j || xindex != i) mask |= a[yindex, xindex];
-                            }
-                        }
-
-                        int match = a[j, i] & (511 - mask);
-
-                        if (s[j, i] == 0 && match > 0)
-                        {
-                            // Bingo
-
-                            double index = Math.Log(match, 2) + 1;
-
-                            L.Add(new SolutionStep(i, j, Convert.ToInt32(index)));
-                        }
-                    }
-                }
-            }
-
-            return L;
-        }
-
-        public bool SolveStep(SolveMethods M)
-        {
-            if (classicSudoku.solveStep() == BusinessLogic.Outcome.FAILED)
+            if (abstractSudoku.solveStep() == BusinessLogic.Outcome.FAILED)
             {
                 MessageBox.Show("Solve Step Failed.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
 
-            SolutionStepList L = ComputePossibleSteps(M);
-
-            if (L.Count() == 0) return false;
-
-            ApplySolutionStep(L.getItem(0));
-
             return true;
-
         }
 
-        public bool SolvePuzzle(SolveMethods M)
+        public bool SolvePuzzle()
         {
-            while (SolveStep(M)) ;
+            while (SolveStep()) ;
 
-            return (isFull());
+            return false;
 
         }
 
@@ -979,269 +565,14 @@ namespace Sudoku
 
         }
 
-        public int ComputeErrors()
-        {
-            Sudoku S2 = this.CreateCopy();
-
-            int errors_count = 0;
-
-            for (int i = 0; i < 9; i++)
-                for (int j = 0; j < 9; j++)
-                {
-                    if (f[j, i] == 0) S2.s[j, i] = 0;
-                }
-
-            S2.SolvePuzzle(SolveMethods.All);
-
-            for (int i = 0; i < 9; i++)
-                for (int j = 0; j < 9; j++)
-                {
-                    if (S2.s[j, i] == s[j, i] || s[j, i] == 0)
-                    {
-                        e[j, i] = 0;
-                    }
-                    else
-                    {
-                        e[j, i] = 1;
-                        errors_count++;
-                    }
-                }
-
-            return errors_count;
-
-        }
 
         public bool isSolved()
         {
-            return (isFull() && checkSolvable(SolveMethods.All));
+            return false;
 
         }
 
         #region Private Functions
-
-        private bool isFull()
-        {
-            for (int i = 0; i < 9; i++)
-                for (int j = 0; j < 9; j++)
-                {
-                    if (s[i, j] == 0) return false;
-                }
-            return true;
-        }
-
-        private List<int> GenerateRandomList()
-        {
-            Random R = new Random();
-
-            List<int> L1 = new List<int>();
-
-            List<int> L2 = new List<int>();
-
-            for (int i = 1; i < 10; i++) L1.Add(i);
-
-            while (L1.Count > 0)
-            {
-                int index = R.Next(L1.Count);
-
-                L2.Add(L1[index]);
-
-                L1.RemoveAt(index);
-            }
-
-            return L2;
-
-
-        }
-
-        private bool CheckOneToNine(List<int> L)
-        {
-            if (L.Count != 9) MessageBox.Show("Problem here!");
-
-            int[] vals = new int[10];
-
-            for (int i = 0; i < 9; i++)
-            {
-                int item = L[i];
-
-                if (item > 0)
-                {
-                    vals[item]++;
-
-                    if (vals[L[i]] > 1) return false;
-                }
-            }
-            return true;
-        }
-
-        private void EnumeratePossibilities()
-        {
-            for (int i = 0; i < 9; i++)
-                for (int j = 0; j < 9; j++)
-                {
-                    a[j, i] = 511;
-                }
-
-            for (int i = 0; i < 9; i++)
-            {
-                for (int j = 0; j < 9; j++)
-                {
-                    if (s[j, i] > 0)
-                    {
-                        a[j, i] = (1 << (s[j, i]) - 1);
-
-                        int mask = 511 - (1 << (s[j, i]) - 1);
-
-                        int blockx = i / 3;
-
-                        int blocky = j / 3;
-
-                        for (int k = 0; k < 3; k++)
-                        {
-                            for (int l = 0; l < 3; l++)
-                            {
-                                if (blocky * 3 + k != j || blockx * 3 + l != i) a[blocky * 3 + k, blockx * 3 + l] &= mask;
-                            }
-                        }
-
-                        for (int n = 0; n < 9; n++)
-                        {
-                            // Removing entries from row and column squares
-
-                            if (n != i) a[j, n] &= mask;
-
-                            if (n != j) a[n, i] &= mask;
-                        }
-                    }
-                }
-            }
-        }
-
-        private void SwapRows(int r1, int r2)
-        {
-            int temp;
-
-            for (int n = 0; n < 9; n++)
-            {
-                temp = s[r1, n];
-
-                s[r1, n] = s[r2, n];
-
-                s[r2, n] = temp;
-
-                temp = f[r1, n];
-
-                f[r1, n] = f[r2, n];
-
-                f[r2, n] = temp;
-
-                temp = a[r1, n];
-
-                a[r1, n] = a[r2, n];
-
-                a[r2, n] = temp;
-
-
-            }
-        }
-
-        private void SwapCols(int c1, int c2)
-        {
-            int temp;
-
-            for (int n = 0; n < 9; n++)
-            {
-                temp = s[n, c1];
-
-                s[n, c1] = s[n, c2];
-
-                s[n, c2] = temp;
-
-                temp = f[n, c1];
-
-                f[n, c1] = f[n, c2];
-
-                f[n, c2] = temp;
-
-                temp = a[n, c1];
-
-                a[n, c1] = a[n, c2];
-
-                a[n, c2] = temp;
-            }
-        }
-
-        private void ChangeSymbols()
-        {
-            int[] symbols = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-
-            int scrambles = 10;
-
-            for (int n = 0; n < scrambles; n++)
-            {
-                int index1 = R.Next(9) + 1;
-
-                int index2 = R.Next(9) + 1;
-
-                int temp = symbols[index1];
-
-                symbols[index1] = symbols[index2];
-
-                symbols[index2] = temp;
-            }
-
-            for (int i = 0; i < 9; i++)
-            {
-                for (int j = 0; j < 9; j++)
-                {
-                    s[i, j] = symbols[s[i, j]];
-                }
-            }
-        }
-
-        private Sudoku CreateCopy()
-        {
-            Sudoku copy = new Sudoku();
-
-            for (int i = 0; i < 9; i++)
-                for (int j = 0; j < 9; j++)
-                {
-                    copy.s[i, j] = s[i, j];
-                }
-
-            return copy;
-        }
-
-        private void DisplayPuzzleSolved(object sender, EventArgs e)
-        {
-            Timer T = (Timer)sender;
-
-            T.Stop();
-
-            for (int i = 0; i < 9; i++)
-                for (int j = 0; j < 9; j++)
-                    f[i, j] = 1;
-
-            if (PlaySound != null) PlaySound(SudokuSound.Solved);
-
-            msg_text1 = "Puzzle Solved";
-
-            msg_text2 = duration;
-
-            PriorityMessage = true;
-
-            DisplayMessage = true;
-
-            if (RequestRepaint != null) RequestRepaint();
-
-
-        }
-
-        private void ApplySolutionStep(SolutionStep ss)
-        {
-            s[ss.y, ss.x] = ss.num;
-
-            f[ss.y, ss.x] = 0;
-        }
 
         #endregion
 

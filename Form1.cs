@@ -24,11 +24,14 @@ namespace Sudoku
 
         private Communicator C;
 
+        private BusinessLogic.AbstractSudoku abstractSudoku = null;
+
         public Form1()
         {
             InitializeComponent();
 
-            S = new Sudoku();
+            abstractSudoku = new BusinessLogic.ClassicSudoku();
+            S = new Sudoku(abstractSudoku);
 
             Application.DoEvents();
 
@@ -44,8 +47,7 @@ namespace Sudoku
 
             C.StatusChange += new Communicator.MethodDelegate(C_StatusChange);
 
-            BusinessLogic.ClassicSudoku.Instance.setListener(this);
-
+            abstractSudoku.setListener(this);
         }
 
         void C_StatusChange()
@@ -150,6 +152,7 @@ namespace Sudoku
 
         private void newToolStripMenuItem1_Click(object sender, EventArgs e)
         {
+            abstractSudoku.Reset();
             S.GenerateGame();
         }
 
@@ -161,7 +164,7 @@ namespace Sudoku
 
         private void copyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Clipboard.SetText(BusinessLogic.ClassicSudoku.Instance.getNumbersString());
+            Clipboard.SetText(abstractSudoku.getNumbersString());
         }
 
         private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
@@ -178,10 +181,10 @@ namespace Sudoku
 
         private void solveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            BusinessLogic.Outcome outcome = BusinessLogic.ClassicSudoku.Instance.solveStep();
+            BusinessLogic.Outcome outcome = abstractSudoku.solveStep();
             while (outcome == BusinessLogic.Outcome.UPDATED)
             {
-                outcome = BusinessLogic.ClassicSudoku.Instance.solveStep();
+                outcome = abstractSudoku.solveStep();
 
                 if (outcome == BusinessLogic.Outcome.FAILED)
                 {
@@ -189,53 +192,20 @@ namespace Sudoku
                 }
             }
 
-            if (S.checkSolvable(Sudoku.SolveMethods.All) == false)
-            {
-                Application.DoEvents();
-
-                MessageBox.Show("This puzzle cannot be solved!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else
-            {
-                S.SolvePuzzle(Sudoku.SolveMethods.All);
-
-                pictureBox1.Invalidate();
-            }
+            pictureBox1.Invalidate();
         }
 
         private void toolStripMenuItem1_Click(object sender, EventArgs e)
         {
             listBox1.Items.Insert(0,"Solving one step");
-            S.SolveStep(Sudoku.SolveMethods.All);
+            S.SolveStep();
             
             pictureBox1.Invalidate();
         }
 
         private void checkSolvabilityToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (S.isSolved()) return;
-
-            int error_count = S.ComputeErrors();
-
-            if (error_count == 0)
-            {
-                S.RenderMessage("Everything's cool dude!", "Press any key to continue", false);
-
                 pictureBox1.Invalidate();
-
-                Application.DoEvents();
-
-                //   PuzzleFine.Play();
-            }
-            else
-            {
-                Application.DoEvents();
-
-                S.ShowErrors = true;
-
-                pictureBox1.Invalidate();
-            }
-
         }
 
         private void openToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -271,11 +241,7 @@ namespace Sudoku
 
         private void checkSolutionsCountToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (S.isSolved()) return;
-
-            Sudoku.SolutionStepList L = S.ComputePossibleSteps(Sudoku.SolveMethods.All);
-
-            S.RenderMessage(L.Count().ToString() + " possible deductions!", "Press any key to continue", false);
+            //S.RenderMessage(L.Count().ToString() + " possible deductions!", "Press any key to continue", false);
         }
 
         private void saveToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -332,6 +298,11 @@ namespace Sudoku
         public void onNewString(string str)
         {
             listBox1.Items.Insert(0, str);
+        }
+
+        private void Form1_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+        {
+            int test = 1;
         }
     }
 }
