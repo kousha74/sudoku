@@ -8,7 +8,7 @@ namespace Sudoku.BusinessLogic
     abstract class AbstractSudoku
     {
         private Dictionary<Condition, ConditionInfo> conditions = new Dictionary<Condition, ConditionInfo>();
-        private List<Clique> cliques = new List<Clique>();
+        protected List<Clique> cliques = new List<Clique>();
 
         public readonly int size;
         public readonly int[] bitCounter;
@@ -16,6 +16,7 @@ namespace Sudoku.BusinessLogic
         public enum SudokuType { CLASSIC };
 
         public readonly SudokuType sudokuType;
+        private ChainSolver chainSolver = null;
 
         public AbstractSudoku(int size, SudokuType sudokuType)
         {
@@ -35,6 +36,18 @@ namespace Sudoku.BusinessLogic
         public abstract Outcome addInitialNumber(int row, int col, int number);
         public abstract Outcome setInitialNumbers(List<int> numbers);
         public abstract string getNumbersString();
+
+        public void onPairFound(List<ConditionInfo> infos)
+        {
+            List<Condition> conditionList = new List<Condition>();
+
+            foreach(ConditionInfo info in infos)
+            {
+                conditionList.Add(info.condition);
+            }
+
+            onPairFound(conditionList);
+        }
 
         public void setListener(IAbstractSudoku listener)
         {
@@ -81,7 +94,7 @@ namespace Sudoku.BusinessLogic
                     conditionInfos.Add(conditionInfo);
                 }
             }
-
+            chainSolver = new ChainSolver(this, cliques);
             return true;
         }
 
@@ -106,23 +119,35 @@ namespace Sudoku.BusinessLogic
         {
             Outcome outcome = Outcome.NO_CHANGE;
 
-            foreach(Clique clique in cliques)
+            List<Clique.State> states = new List<Clique.State>()
             {
-                if (clique.needsUpdate())
+                Clique.State.CHECK_SINGLE,
+                Clique.State.CHECK_SUBSET,
+                Clique.State.CHECK_PAIR
+            };
+
+            foreach (Clique.State state in states)
+            {
+                foreach (Clique clique in cliques)
                 {
-                    switch (clique.updateClique())
+                    if (clique.getState() == state)
                     {
-                        case Outcome.FAILED:
-                            return Outcome.FAILED;
+                        switch (clique.updateClique())
+                        {
+                            case Outcome.FAILED:
+                                return Outcome.FAILED;
 
-                        case Outcome.UPDATED:
-                            return Outcome.UPDATED;
+                            case Outcome.UPDATED:
+                                return Outcome.UPDATED;
 
-                        case Outcome.NO_CHANGE:
-                            break;
+                            case Outcome.NO_CHANGE:
+                                break;
+                        }
                     }
                 }
             }
+
+            chainSolver.solveChains();
 
             return outcome;
         }
@@ -152,7 +177,7 @@ namespace Sudoku.BusinessLogic
             return getCommonCliques(new List<ConditionInfo>() { info1, info2 });
         }
 
-        public List<Clique> getCommonCliques(List<ConditionInfo> conditionInfos)
+        public static List<Clique> getCommonCliques(List<ConditionInfo> conditionInfos)
         {
             List<Clique> cliques = new List<Clique>();
 
@@ -190,39 +215,6 @@ namespace Sudoku.BusinessLogic
             return desiredCliques;
         }
 
-        public List<Bridge> findBridges(ConditionInfo info)
-        {
-            List<Bridge> bridges = new List<Bridge>();
-
-            foreach(Clique clique in cliques)
-            {
-                if (!clique.hasCondition(info)) 
-                {
-                    List<ConditionInfo> undecidedConditions = clique.getUndecidedConditions();
-
-                    if (undecidedConditions.Count == 2)
-                    {
-                        foreach(Clique commonClique in getCommonCliques(info, undecidedConditions[0]))
-                        {
-                            bridges.Add(new Bridge(commonClique, info, undecidedConditions[0], undecidedConditions[1]));
-                        }
-
-                        foreach(Clique commonClique in getCommonCliques(info, undecidedConditions[1]))
-                        {
-                            bridges.Add(new Bridge(commonClique, info, undecidedConditions[1], undecidedConditions[0]));
-                        }
-                    }
-                }
-            }
-
-            return bridges;
-        }
-
-        public Outcome applyBridge(Bridge bridge)
-        {
-            return bridge.clique.removeAllBut(new List<ConditionInfo>() { bridge.start, bridge.end });
-        }
-
         public void sendString(string str)
         {
             if (listener != null)
@@ -235,6 +227,5 @@ namespace Sudoku.BusinessLogic
         {
             void onNewString(string str);
         }
-
     }
 }

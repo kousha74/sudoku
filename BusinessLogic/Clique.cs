@@ -7,15 +7,16 @@ namespace Sudoku.BusinessLogic
 {
     class Clique
     {
+        public enum State { IDLE, CHECK_SINGLE, CHECK_SUBSET, CHECK_PAIR, SOLVED }
         public readonly HashSet<ConditionInfo> conditions = new HashSet<ConditionInfo>();
 
         private readonly int size;
         private static int globalId = 0;
         public readonly int id;
-        public bool updateNeeded = false;
+
+        private State state = State.IDLE;
 
         //once one condition of a clique is satisfied, we are done with it
-        public bool active = true;
         public readonly string name;
         private readonly AbstractSudoku abstractSudoku;
         List<ConditionInfo> undecidedConditions = new List<ConditionInfo>();
@@ -30,10 +31,11 @@ namespace Sudoku.BusinessLogic
             reset();
         }
 
+        public bool active { get => state != State.SOLVED; }
+
         public void reset()
         {
-            updateNeeded = false;
-            active = true;
+            state = State.IDLE;
             buildUndecidedConditions();
         }
 
@@ -74,94 +76,99 @@ namespace Sudoku.BusinessLogic
         {
             if (active)
             {
-                updateNeeded = true;
+                state = State.CHECK_SINGLE;
             }
         }
 
         public void deactivate()
         {
-            active = false;
+            state = State.SOLVED;
             undecidedConditions.Clear();
         }
 
-        public bool needsUpdate()
+        public State getState()
         {
-            return updateNeeded;
+            return state;
         }
 
         public Outcome updateClique()
         {
             Outcome outcome = Outcome.NO_CHANGE;
-            if (active)
+
+            switch(state)
             {
-                buildUndecidedConditions();
+                case State.IDLE:
+                case State.SOLVED:
+                    break;
 
-                if (undecidedConditions.Count == 0)
-                {
-                    return Outcome.FAILED;
-                }
+                case State.CHECK_SINGLE:
+                    buildUndecidedConditions();
+                    outcome = checkSingles();
+                    state = State.CHECK_SUBSET;
+                    break;
 
-                outcome = checkHiddenSingles();
+                case State.CHECK_SUBSET:
+                    outcome = checkSubsets();
+                    state = State.CHECK_PAIR;
+                    break;
 
-                if (outcome == Outcome.FAILED)
-                {
-                    return outcome;
-                }
-
-                //check for subsets
-                foreach(Clique clique in abstractSudoku.getCommonCliques(undecidedConditions))
-                {
-                    //if it's not this clique
-                    if (clique.id != id)
-                    {
-                        switch (clique.removeAllBut(undecidedConditions))
-                        {
-                            case Outcome.FAILED:
-                                return Outcome.FAILED;
-
-                            case Outcome.UPDATED:
-                                outcome = Outcome.UPDATED;
-                                break;
-
-                            case Outcome.NO_CHANGE:
-                                break;
-                        }
-
-                    }
-                }
-
-                switch (checkForPairs())
-                {
-                    case Outcome.FAILED:
-                        return Outcome.FAILED;
-
-                    case Outcome.UPDATED:
-                        outcome = Outcome.UPDATED;
-                        break;
-
-                    case Outcome.NO_CHANGE:
-                        break;
-                }
+                case State.CHECK_PAIR:
+                    outcome = checkPairs();
+                    state = State.IDLE;
+                    break;
             }
-
-            updateNeeded = false;
        
             return outcome;
         }
 
-        private Outcome checkHiddenSingles()
+        private Outcome checkSingles()
         {
-            if (undecidedConditions.Count == 1)
+            if (undecidedConditions.Count == 0)
             {
-                active = false;
+                return Outcome.FAILED;
+            }
+            else if (undecidedConditions.Count == 1)
+            {
+                
                 abstractSudoku.sendString("Clique: " + name + " Single");
-                return undecidedConditions[0].setStatus(Status.SATISFIED);
+                Outcome outcome = undecidedConditions[0].setStatus(Status.SATISFIED);
+                deactivate();
+                return outcome;
             }
 
             return Outcome.NO_CHANGE;
         }
 
-        private Outcome checkForPairs()
+        private Outcome checkSubsets()
+        {
+            Outcome outcome = Outcome.NO_CHANGE;
+
+            foreach (Clique clique in AbstractSudoku.getCommonCliques(undecidedConditions))
+            {
+                //if it's not this clique
+                if (clique.id != id)
+                {
+                    switch (clique.removeAllBut(undecidedConditions))
+                    {
+                        case Outcome.FAILED:
+                            return Outcome.FAILED;
+
+                        case Outcome.UPDATED:
+                            abstractSudoku.onPairFound(undecidedConditions);
+                            outcome = Outcome.UPDATED;
+                            break;
+
+                        case Outcome.NO_CHANGE:
+                            break;
+                    }
+
+                }
+            }
+
+            return outcome;
+        }
+
+        private Outcome checkPairs()
         {
             Outcome outcome = Outcome.NO_CHANGE;
 
@@ -170,49 +177,55 @@ namespace Sudoku.BusinessLogic
                 ConditionInfo A = undecidedConditions[0];
                 ConditionInfo B = undecidedConditions[1];
 
-                List<Bridge> bridges = abstractSudoku.findBridges(A);
-
-                foreach(Bridge bridge1 in abstractSudoku.findBridges(A))
+                foreach(ConditionInfo C in B.getBlueNeighbors())
                 {
-                    foreach (Bridge bridge2 in abstractSudoku.findBridges(bridge1.extension))
+                    if (C.id != A.id)
                     {
-                        if (bridge2.extension.condition.id == A.condition.id)
+                        List<Clique> cliquesBC = abstractSudoku.getCommonCliques(B, C);
+
+                        foreach (ConditionInfo D in C.getRedNeighbors())
                         {
-                            switch (abstractSudoku.applyBridge(bridge1))
+                            List<Clique> cliquesAD = abstractSudoku.getCommonCliques(A, D);
+
+                            if (cliquesAD.Count > 0)
                             {
-                                case Outcome.FAILED:
-                                    return Outcome.FAILED;
+                                foreach(Clique clique in cliquesBC)
+                                {
+                                    switch (clique.removeAllBut(B, C))
+                                    {
+                                        case Outcome.FAILED:
+                                            return Outcome.FAILED;
 
-                                case Outcome.UPDATED:
-                                    outcome = Outcome.UPDATED;
-                                    break;
+                                        case Outcome.UPDATED:
+                                            outcome = Outcome.UPDATED;
+                                            break;
 
-                                case Outcome.NO_CHANGE:
-                                    break;
-                            }
+                                        case Outcome.NO_CHANGE:
+                                            break;
+                                    }
 
-                            switch (abstractSudoku.applyBridge(bridge2))
-                            {
-                                case Outcome.FAILED:
-                                    return Outcome.FAILED;
+                                }
+                                foreach (Clique clique in cliquesAD)
+                                {
+                                    switch (clique.removeAllBut(A, D))
+                                    {
+                                        case Outcome.FAILED:
+                                            return Outcome.FAILED;
 
-                                case Outcome.UPDATED:
-                                    outcome = Outcome.UPDATED;
-                                    break;
+                                        case Outcome.UPDATED:
+                                            outcome = Outcome.UPDATED;
+                                            break;
 
-                                case Outcome.NO_CHANGE:
-                                    break;
-                            }
+                                        case Outcome.NO_CHANGE:
+                                            break;
+                                    }
+                                }
 
-                            //for logging only
-                            if (outcome == Outcome.UPDATED)
-                            {
-                                abstractSudoku.onPairFound(new List<Condition>() {
-                                bridge1.start.condition,
-                                bridge1.end.condition,
-                                bridge2.start.condition,
-                                bridge2.end.condition,
-                                });
+                                //for logging only
+                                if (outcome == Outcome.UPDATED)
+                                {
+                                    abstractSudoku.onPairFound(new List<ConditionInfo>() { A, B, C, D });
+                                }
                             }
                         }
                     }
@@ -222,6 +235,10 @@ namespace Sudoku.BusinessLogic
             return outcome;
         }
 
+        public Outcome removeAllBut(ConditionInfo info1, ConditionInfo info2)
+        {
+            return removeAllBut(new List<ConditionInfo>() { info1, info2 });
+        }
         public Outcome removeAllBut(List<ConditionInfo> excludedconditions)
         {
             Outcome outcome = Outcome.NO_CHANGE;

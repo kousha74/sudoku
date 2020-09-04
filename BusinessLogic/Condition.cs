@@ -11,8 +11,11 @@ namespace Sudoku.BusinessLogic
 
         private static int globalId = 0;
 
-        public Condition()
+        public readonly string name;
+
+        public Condition(string name)
         {
+            this.name = name;
             id = globalId++;
         }
 

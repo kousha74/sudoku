@@ -26,7 +26,7 @@ namespace Sudoku.BusinessLogic
                 {
                     for (int number = 0; number < size; number++)
                     {
-                        boardConditions[row, col, number] = new ConditionSquareSudoku(row, col, number);
+                        boardConditions[row, col, number] = new ConditionSquareSudoku(row, col, number, (row+1).ToString() + (col+1).ToString() + (number+1).ToString());
                     }
                 }
             }
@@ -47,24 +47,6 @@ namespace Sudoku.BusinessLogic
                 }
             }
             base.Reset();
-        }
-
-        private void createConditions()
-        {
-            int row;
-            int col;
-            int number;
-
-            for (row = 0; row < size; row++)
-            {
-                for (col = 0; col < size; col++)
-                {
-                    for (number = 0; number < size; number++)
-                    {
-                        boardConditions[row, col, number] = new ConditionSquareSudoku(row, col, number); 
-                    }
-                }
-            }
         }
 
         public int getInitialNumber(int row, int col)

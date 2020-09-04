@@ -11,7 +11,8 @@ namespace Sudoku.BusinessLogic
         public readonly int col;
         public readonly int number;
 
-        public ConditionSquareSudoku(int row, int col, int number)
+        public ConditionSquareSudoku(int row, int col, int number, string name)
+            :base(name)
         {
             this.row = row;
             this.col = col;

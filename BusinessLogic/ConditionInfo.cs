@@ -21,6 +21,11 @@ namespace Sudoku.BusinessLogic
             this.abstractSudoku = abstractSudoku;
         }
 
+        public int id
+        {
+            get => condition.id;
+        }
+
         public bool addClique(Clique clique)
         {
             if (cliques.Contains(clique))
@@ -105,13 +110,48 @@ namespace Sudoku.BusinessLogic
 
         public override int GetHashCode()
         {
-            return condition.id.GetHashCode();
+            return id.GetHashCode();
         }
 
         public override bool Equals(object obj)
         {
-            return condition.id == ((ConditionInfo)obj).condition.id;
+            return id == ((ConditionInfo)obj).id;
         }
 
+        //list of undecided neighbors
+        public List<ConditionInfo> getBlueNeighbors()
+        {
+            List<ConditionInfo> blueNeighbors = new List<ConditionInfo>();
+            foreach (ConditionInfo info in neighbors)
+            {
+                if (info.status == Status.UNDECIDED)
+                {
+                    blueNeighbors.Add(info);
+                }
+            }
+            return blueNeighbors;
+        }
+
+        //List of neighbors such that either this condition or the neighbor are true
+        public HashSet<ConditionInfo> getRedNeighbors()
+        {
+            HashSet<ConditionInfo> redNeighbors = new HashSet<ConditionInfo>();
+            foreach (Clique clique in cliques)
+            {
+                List<ConditionInfo> undecidedConditions = clique.getUndecidedConditions();
+
+                if (undecidedConditions.Count == 2)
+                {
+                    foreach (ConditionInfo info in undecidedConditions)
+                    {
+                        if (info.id != id)
+                        {
+                            redNeighbors.Add(info);
+                        }
+                    }
+                }
+            }
+            return redNeighbors;
+        }
     }
 }
